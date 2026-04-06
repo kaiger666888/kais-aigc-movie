@@ -1,8 +1,8 @@
-import { getConfig } from "../config/default.js";
+import { getConfig } from "../config.js";
 
 /** Options for a single TTS synthesis call */
 export interface SynthesizeOptions {
-  /** Voice preset identifier */
+  /** Voice preset: "male", "female", etc. */
   voice?: string;
   /** Speech rate multiplier (0.5 – 2.0) */
   speed?: number;
@@ -22,6 +22,7 @@ const MAX_CONCURRENCY = 3;
  * GLM-TTS API wrapper.
  *
  * Provides single and batch text-to-speech synthesis using the GLM-TTS endpoint.
+ * Bearer token authentication.
  */
 export class GlmTtsService {
   private readonly endpoint: string;
@@ -49,9 +50,9 @@ export class GlmTtsService {
 
     try {
       const body = JSON.stringify({
-        model: "tts-1",
+        model: "glm-tts",
         input: text,
-        voice: options?.voice ?? "alloy",
+        voice: options?.voice ?? "female",
         speed: options?.speed ?? 1.0,
         response_format: "mp3",
       });
@@ -101,7 +102,6 @@ export class GlmTtsService {
       }
     };
 
-    // Launch up to MAX_CONCURRENCY workers
     const workers: Promise<void>[] = [];
     for (
       let i = 0;

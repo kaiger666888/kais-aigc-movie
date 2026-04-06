@@ -1,14 +1,14 @@
-import { mkdir, readdir } from "node:fs/promises";
+import { mkdir, rm, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { getConfig } from "../config/default.js";
+import { getConfig } from "../config.js";
 
 /**
  * Manages episode directory structure on disk.
  *
  * Each episode lives under `<episodesDir>/<episodeId>/` with sub-directories:
- * - `audio/`   — TTS-generated MP3 files
- * - `shots/`   — Kling-generated video clips
- * - output at  — `rough_cut.mp4`
+ * - `audio/` — TTS-generated MP3 files
+ * - `shots/` — Kling-generated video clips
+ * - output at `rough_cut.mp4`
  */
 export class FileManager {
   private readonly baseDir: string;
@@ -60,21 +60,16 @@ export class FileManager {
     return join(this.baseDir, episodeId, "state.json");
   }
 
-  /** List all asset files in an episode directory. */
-  async listEpisodeAssets(episodeId: string): Promise<string[]> {
+  /** Recursively delete an episode directory. */
+  async cleanupEpisode(episodeId: string): Promise<void> {
     const epDir = this.getEpisodeDir(episodeId);
-    try {
-      return await readdir(epDir, { recursive: true }) as string[];
-    } catch {
-      return [];
-    }
+    await rm(epDir, { recursive: true, force: true });
   }
 
   /** List all episode IDs in the base directory. */
   async listEpisodes(): Promise<string[]> {
     try {
-      const entries = await readdir(this.baseDir);
-      return entries;
+      return await readdir(this.baseDir);
     } catch {
       return [];
     }

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 /**
- * Concatenate multiple video files into one.
+ * Concatenate multiple video files into one using ffmpeg concat demuxer.
  *
  * @param inputPaths - Ordered list of video file paths.
  * @param outputPath - Destination file path.
@@ -13,7 +13,6 @@ export async function concatVideos(
   inputPaths: string[],
   outputPath: string,
 ): Promise<void> {
-  // Build an ffmpeg concat list
   const listPath = join(tmpdir(), `concat-${Date.now()}.txt`);
   const content = inputPaths
     .map((p) => `file '${p.replace(/'/g, "'\\''")}'`)
@@ -22,7 +21,11 @@ export async function concatVideos(
 
   try {
     await runFfmpeg((cmd) =>
-      cmd.input(listPath).inputOptions(["-f concat", "-safe 0"]).outputOptions("-c copy").save(outputPath),
+      cmd
+        .input(listPath)
+        .inputOptions(["-f concat", "-safe 0"])
+        .outputOptions("-c copy")
+        .save(outputPath),
     );
   } finally {
     await unlink(listPath).catch(() => {});
@@ -30,9 +33,7 @@ export async function concatVideos(
 }
 
 /**
- * Overlay an audio track onto a video.
- *
- * Replaces any existing audio in the video with the new track.
+ * Overlay an audio track onto a video (replaces existing audio).
  *
  * @param videoPath - Source video.
  * @param audioPath - Audio to overlay.
@@ -70,7 +71,6 @@ export async function addSubtitle(
   srtPath: string,
   outputPath: string,
 ): Promise<void> {
-  // Escape special characters for ffmpeg filter
   const escapedPath = srtPath
     .replace(/\\/g, "/")
     .replace(/:/g, "\\:")
@@ -86,25 +86,21 @@ export async function addSubtitle(
 }
 
 /**
- * Add a crossfade transition between clips.
- *
- * Produces a single output with `fadeDuration` seconds of crossfade
- * between each consecutive clip.
+ * Add crossfade transitions between video clips.
  *
  * @param inputPaths - Ordered video clips.
  * @param outputPath - Destination file.
- * @param fadeDuration - Fade duration in seconds (default 0.3).
+ * @param type - Transition type (default "fade").
  */
 export async function addTransition(
   inputPaths: string[],
   outputPath: string,
-  fadeDuration: number = 0.3,
+  type: string = "fade",
 ): Promise<void> {
   if (inputPaths.length === 0) {
     throw new Error("No input clips provided");
   }
   if (inputPaths.length === 1) {
-    // Single clip — just copy
     await runFfmpeg((cmd) =>
       cmd.input(inputPaths[0]!).outputOptions("-c copy").save(outputPath),
     );
@@ -112,22 +108,20 @@ export async function addTransition(
   }
 
   const cmd = ffmpeg();
+  const fadeDuration = 0.3;
 
-  // Add each clip as an input and build xfade filter chain
   for (const p of inputPaths) {
     cmd.input(p);
   }
 
-  // Build filter complex for chain of xfade filters
   const filters: string[] = [];
   let lastLabel = "[0:v]";
   for (let i = 1; i < inputPaths.length; i++) {
     const outLabel =
-      i === inputPaths.length - 1
-        ? "[outv]"
-        : `[v${i}]`;
+      i === inputPaths.length - 1 ? "[outv]" : `[v${i}]`;
+    const offset = 5; // simplified: assume ~5s per clip
     filters.push(
-      `${lastLabel}[${i}:v]xfade=transition=fade:duration=${fadeDuration}:offset=${computeOffset(inputPaths, i, fadeDuration)}${outLabel}`,
+      `${lastLabel}[${i}:v]xfade=transition=${type}:duration=${fadeDuration}:offset=${offset}${outLabel}`,
     );
     lastLabel = outLabel;
   }
@@ -146,31 +140,30 @@ export async function addTransition(
  * Probe video metadata using ffprobe.
  *
  * @param filePath - Path to the media file.
- * @returns Parsed ffprobe output.
+ * @returns Object with duration, codec, width, height.
  */
 export async function probeVideo(
   filePath: string,
-): Promise<Record<string, unknown>> {
+): Promise<{ duration: number; codec: string; width: number; height: number }> {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, data) => {
-      if (err) reject(new Error(`ffprobe error: ${err.message}`));
-      else resolve(data as unknown as Record<string, unknown>);
+      if (err) {
+        reject(new Error(`ffprobe error: ${err.message}`));
+        return;
+      }
+
+      const videoStream = data.streams.find((s) => s.codec_type === "video");
+      resolve({
+        duration: data.format.duration ?? 0,
+        codec: videoStream?.codec_name ?? "unknown",
+        width: videoStream?.width ?? 0,
+        height: videoStream?.height ?? 0,
+      });
     });
   });
 }
 
-/** Calculate offset for xfade filter chain */
-function computeOffset(
-  _inputs: string[],
-  _index: number,
-  _fade: number,
-): number {
-  // Simplified: assume each clip is ~5 seconds. Real impl would probe durations.
-  // For now use a conservative estimate.
-  return 5;
-}
-
-/** Run an ffmpeg command and wrap events in a Promise. */
+/** Run an ffmpeg command and wrap events in a Promise */
 function runFfmpeg(
   builder: (cmd: ffmpeg.FfmpegCommand) => ffmpeg.FfmpegCommand,
 ): Promise<void> {

@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { getConfig } from "../config/default.js";
+import { getConfig } from "../config.js";
 
 // ============================================================================
 // Kling JWT Authentication
@@ -9,11 +9,11 @@ import { getConfig } from "../config/default.js";
 
 /** Token validity duration in seconds (30 minutes) */
 const TOKEN_VALIDITY_SECONDS = 1800;
-/** Cache buffer in seconds (refresh 5 minutes before expiry) */
+/** Refresh 5 minutes before expiry */
 const CACHE_BUFFER_SECONDS = 300;
 
 /**
- * Generate a Kling API JWT token.
+ * Generate a Kling API JWT token using HMAC-SHA256.
  *
  * Header: { alg: "HS256", typ: "JWT" }
  * Payload: { iss: accessKey, exp: now + 1800, nbf: now - 5 }
@@ -39,9 +39,7 @@ function generateKlingJwt(accessKey: string, secretKey: string): string {
   return `${signatureInput}.${signature}`;
 }
 
-/**
- * Cached JWT with auto-refresh.
- */
+/** Cached JWT with auto-refresh */
 class KlingAuthToken {
   private token: string | null = null;
   private expiry = 0;
@@ -66,6 +64,7 @@ class KlingAuthToken {
 // Types
 // ============================================================================
 
+/** Options for text-to-video generation */
 export interface KlingSubmitOptions {
   /** Duration in seconds: "5" or "10" */
   duration?: string;
@@ -75,6 +74,7 @@ export interface KlingSubmitOptions {
   model?: string;
 }
 
+/** Response from task submission */
 export interface KlingTaskResponse {
   code: number;
   message: string;
@@ -83,6 +83,7 @@ export interface KlingTaskResponse {
   };
 }
 
+/** Response from task polling */
 export interface KlingTaskResult {
   code: number;
   message: string;
@@ -100,19 +101,13 @@ export interface KlingTaskResult {
 // Kling API Service
 // ============================================================================
 
-const DEFAULT_BASE_URL = "https://api-singapore.klingai.com";
 const DEFAULT_POLL_INTERVAL_MS = 3000;
 
 /**
  * Kling 3.0 API Service.
  *
- * Handles async video generation:
- *   submit(prompt) → task_id
- *   poll(taskId) → TaskResult
- *   download(taskId, outputDir) → local file path
- *
- * Uses JWT (HS256) authentication with Access Key + Secret Key.
- * Implements concurrency control via a simple semaphore.
+ * Handles async video generation with JWT (HS256) authentication,
+ * concurrency control, exponential backoff retries, and timeout protection.
  */
 export class KlingApiService {
   private readonly baseUrl: string;
@@ -129,7 +124,7 @@ export class KlingApiService {
 
   constructor() {
     const cfg = getConfig();
-    this.baseUrl = cfg.kling.apiEndpoint || DEFAULT_BASE_URL;
+    this.baseUrl = cfg.kling.apiUrl;
     this.auth = new KlingAuthToken(cfg.kling.accessKey, cfg.kling.secretKey);
     this.maxConcurrent = cfg.kling.maxConcurrent;
     this.maxRetries = cfg.kling.maxRetries;
@@ -184,10 +179,11 @@ export class KlingApiService {
   }
 
   /**
-   * Poll a task until it completes or times out.
+   * Poll a task until it completes, fails, or times out.
    *
    * @param taskId - The task ID from submitTask.
    * @returns The final task result.
+   * @throws On task failure or timeout.
    */
   async pollTask(taskId: string): Promise<KlingTaskResult> {
     const deadline = Date.now() + this.shotTimeoutMs;
@@ -217,7 +213,6 @@ export class KlingApiService {
         throw new Error(`Kling task ${taskId} failed: ${json.message}`);
       }
 
-      // Still processing — wait and retry
       await sleep(this.pollIntervalMs);
     }
 
@@ -226,6 +221,7 @@ export class KlingApiService {
 
   /**
    * Submit a task, poll until complete, and download the video.
+   * Includes exponential backoff retries on submission failure.
    *
    * @param prompt - Visual description.
    * @param outputDir - Directory to save the video.
@@ -239,7 +235,7 @@ export class KlingApiService {
     filename: string,
     options?: KlingSubmitOptions,
   ): Promise<string> {
-    // Submit with retries
+    // Submit with exponential backoff retries
     let taskId: string | null = null;
     let lastError: Error | null = null;
 
@@ -250,7 +246,7 @@ export class KlingApiService {
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
         if (attempt < this.maxRetries) {
-          await sleep(1000 * Math.pow(2, attempt)); // exponential backoff
+          await sleep(1000 * Math.pow(2, attempt));
         }
       }
     }
@@ -292,7 +288,6 @@ export class KlingApiService {
       this.activeCount++;
       return;
     }
-    // Wait for a slot
     await new Promise<void>((resolve) => {
       this.waitQueue.push(resolve);
     });

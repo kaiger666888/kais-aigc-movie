@@ -6,6 +6,7 @@ import {
   type EpisodeStatus,
   type EpisodeStep,
 } from "../types/episode-state.js";
+import type { Shot } from "../types/shots.js";
 import { FileManager } from "./file-manager.js";
 
 /**
@@ -51,7 +52,7 @@ export class EpisodeStateManager {
     return state;
   }
 
-  /** Update an episode's status and/or step, then persist. */
+  /** Update an episode's state and persist to disk. */
   async updateState(
     episodeId: string,
     update: {
@@ -87,24 +88,14 @@ export class EpisodeStateManager {
   }
 
   /** Get shots that can be retried (status "failed" with retryCount < 3). */
-  async getRetryableShots(
-    episodeId: string,
-  ): Promise<Array<{ shotId: string; retryCount: number }>> {
-    // Read shots.json from the episode directory
-    const shotsPath = join(
-      this.fm.getEpisodeDir(episodeId),
-      "shots.json",
-    );
+  async getRetryableShots(episodeId: string): Promise<Shot[]> {
+    const shotsPath = join(this.fm.getEpisodeDir(episodeId), "shots.json");
     try {
       const raw = await readFile(shotsPath, "utf-8");
-      const shots = JSON.parse(raw) as Array<{
-        id: string;
-        status: string;
-        retryCount: number;
-      }>;
-      return shots
-        .filter((s) => s.status === "failed" && s.retryCount < 3)
-        .map((s) => ({ shotId: s.id, retryCount: s.retryCount }));
+      const json = JSON.parse(raw) as { shots: Shot[] };
+      return json.shots.filter(
+        (s) => s.status === "failed" && s.retryCount < 3,
+      );
     } catch {
       return [];
     }
