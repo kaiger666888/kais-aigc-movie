@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfig } from "../config.js";
+import type { VideoGenerator, VideoOptions } from "./video-generator.js";
 
 // ============================================================================
 // Kling JWT Authentication
@@ -109,7 +110,7 @@ const DEFAULT_POLL_INTERVAL_MS = 3000;
  * Handles async video generation with JWT (HS256) authentication,
  * concurrency control, exponential backoff retries, and timeout protection.
  */
-export class KlingApiService {
+export class KlingApiService implements VideoGenerator {
   private readonly baseUrl: string;
   private readonly auth: KlingAuthToken;
   private readonly maxConcurrent: number;
@@ -138,7 +139,7 @@ export class KlingApiService {
    *
    * @returns `true` if authentication succeeds, `false` otherwise.
    */
-  async testAuth(): Promise<boolean> {
+  async testConnection(): Promise<boolean> {
     try {
       const res = await fetch(`${this.baseUrl}/v1/videos/text2video`, {
         method: "POST",
@@ -257,15 +258,21 @@ export class KlingApiService {
     prompt: string,
     outputDir: string,
     filename: string,
-    options?: KlingSubmitOptions,
+    options?: VideoOptions | KlingSubmitOptions,
   ): Promise<string> {
+    // Normalize VideoOptions → KlingSubmitOptions
+    const klingOpts: KlingSubmitOptions = {
+      duration: String((options as VideoOptions)?.duration ?? (options as KlingSubmitOptions)?.duration ?? 5),
+      aspectRatio: (options as VideoOptions)?.aspectRatio ?? (options as KlingSubmitOptions)?.aspectRatio,
+      model: (options as VideoOptions)?.model ?? (options as KlingSubmitOptions)?.model,
+    };
     // Submit with exponential backoff retries
     let taskId: string | null = null;
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
-        taskId = await this.submitTask(prompt, options);
+        taskId = await this.submitTask(prompt, klingOpts);
         break;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));

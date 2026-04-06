@@ -1,5 +1,5 @@
 // Config
-export { loadConfig, getConfig, checkFFmpeg, type Config } from "./config.js";
+export { loadConfig, getConfig, checkFFmpeg, createVideoGenerator, type Config } from "./config.js";
 
 // Types
 export {
@@ -36,7 +36,18 @@ export {
   type EpisodeState,
 } from "./types/index.js";
 
+// Video generation interface
+export {
+  type VideoGenerator,
+  type VideoOptions,
+} from "./services/video-generator.js";
+
 // Services
+export {
+  ComfyUIService,
+  type ComfyUIOptions,
+} from "./services/comfyui-service.js";
+
 export {
   KlingApiService,
   type KlingSubmitOptions,

@@ -8,7 +8,7 @@ This library provides the core building blocks for an automated AI comic/movie p
 
 1. **Story Planning** — Define characters, scenes, and shot lists using Zod-validated TypeScript types
 2. **Voice Synthesis** — GLM-TTS integration for narration and dialogue (WAV output) with 10 built-in voice presets
-3. **Video Generation** — Kling AI text-to-video with JWT auth, concurrency control, and retry logic
+3. **Video Generation** — Dual backend: ComfyUI (Wan2.2, local GPU) or Kling AI (cloud API), unified via `VideoGenerator` interface
 4. **Post-Production** — FFmpeg utilities for concatenation, audio overlay, subtitles, and dynamic crossfade transitions
 5. **State Management** — Episode lifecycle tracking with disk persistence and resumability
 
@@ -30,7 +30,7 @@ This library provides the core building blocks for an automated AI comic/movie p
 
 ```
 lib/
-├── config.ts              # Env-based configuration with Zod validation + ffmpeg detection
+├── config.ts              # Env-based config + FFmpeg detection + createVideoGenerator()
 ├── index.ts               # Public API re-exports
 ├── types/
 │   ├── story-bible.ts     # Characters, scenes, story structure
@@ -38,7 +38,9 @@ lib/
 │   ├── episode-state.ts   # Episode lifecycle state
 │   └── qc-report.ts       # Quality control reporting
 ├── services/
-│   ├── kling-api.ts       # Kling AI video generation + health check
+│   ├── video-generator.ts # Unified VideoGenerator interface
+│   ├── comfyui-service.ts # ComfyUI backend (Wan2.2 T2V)
+│   ├── kling-api.ts       # Kling AI video generation
 │   └── glm-tts.ts         # GLM-TTS voice synthesis + voice presets
 └── utils/
     ├── ffmpeg.ts          # FFmpeg post-production utilities (dynamic transitions)
@@ -71,16 +73,27 @@ const available = await checkFFmpeg(); // true/false
 ### Environment Variables
 
 ```env
+# Video backend: "comfyui" (default) or "kling"
+VIDEO_BACKEND=comfyui
+
 # Required
 GLM_TTS_API_KEY=your_glm_api_key
+
+# ComfyUI (VIDEO_BACKEND=comfyui)
+COMFYUI_HOST=127.0.0.1
+COMFYUI_PORT=8188
+COMFYUI_MODEL=wan2.2_t2v_5B  # wan2.2_t2v_1.3B or wan2.2_t2v_5B
+# COMFYUI_WORKFLOW_PATH=     # Optional: custom workflow JSON
+
+# Kling (VIDEO_BACKEND=kling)
 KLING_ACCESS_KEY=your_kling_access_key
 KLING_SECRET_KEY=your_kling_secret_key
-
-# Optional (with defaults)
-KLING_API_URL=https://api.klingai.com
+KLING_API_URL=https://api-beijing.klingai.com
 KLING_MAX_CONCURRENT=2
 KLING_MAX_RETRIES=3
 KLING_SHOT_TIMEOUT_MS=300000
+
+# Optional
 GLM_TTS_ENDPOINT=https://open.bigmodel.cn/api/paas/v4/audio/speech
 EPISODES_DIR=./episodes
 ```
@@ -92,7 +105,7 @@ EPISODES_DIR=./episodes
 ```typescript
 import {
   getConfig,
-  KlingApiService,
+  createVideoGenerator,
   GlmTtsService,
   EpisodeStateManager,
   FileManager,
@@ -106,19 +119,20 @@ if (!ffmpegOk) {
   process.exit(1);
 }
 
-// Verify Kling API credentials
-const kling = new KlingApiService();
-const authOk = await kling.testAuth();
-if (!authOk) {
-  console.error("Kling API authentication failed. Check your keys.");
+// Verify video backend connectivity
+const videoGen = createVideoGenerator();
+const backendOk = await videoGen.testConnection();
+if (!backendOk) {
+  console.error("Video backend unreachable. Check your VIDEO_BACKEND config.");
   process.exit(1);
 }
 
-// Generate a video from a text prompt
-const videoPath = await kling.submitAndDownload(
+// Generate a video from a text prompt (works with both backends)
+const videoPath = await videoGen.submitAndDownload(
   "A cat sitting on a windowsill at sunset, cinematic lighting",
   "./output/videos",
-  "shot-001"
+  "shot-001",
+  { duration: 5, resolution: "720p" },
 );
 
 // Synthesize speech with a specific voice
@@ -151,6 +165,7 @@ See `skill/SKILL.md` for the full skill documentation.
 |--------|-------------|
 | `loadConfig()` | Build config from env vars (throws on missing required keys) |
 | `getConfig()` | Singleton accessor (lazy-loads, warns if ffmpeg missing) |
+| `createVideoGenerator()` | Create VideoGenerator based on `VIDEO_BACKEND` env var |
 | `checkFFmpeg()` | `Promise<boolean>` — check if ffmpeg is available on PATH |
 | `Config` | Validated config type |
 
@@ -164,13 +179,31 @@ See `skill/SKILL.md` for the full skill documentation.
 | `EpisodeStateSchema` | Episode lifecycle state (persisted to disk) |
 | `QCReportSchema` | Quality control report with per-shot scores |
 
-### Services
+### Video Generation
+
+#### VideoGenerator (unified interface)
+
+| Method | Description |
+|--------|-------------|
+| `submitAndDownload(prompt, dir, filename, options?)` | Submit → poll → download video |
+| `testConnection()` | `Promise<boolean>` — verify backend connectivity |
+
+Both `ComfyUIService` and `KlingApiService` implement this interface. Use `createVideoGenerator()` to auto-select.
+
+#### ComfyUIService
+
+| Method | Description |
+|--------|-------------|
+| `testConnection()` | GET /system_stats — verify ComfyUI is running |
+| `submitAndDownload(prompt, dir, filename, options?)` | Submit Wan2.2 workflow → poll → download |
+
+Supports built-in Wan2.2 T2V workflow or custom workflow via `COMFYUI_WORKFLOW_PATH`.
 
 #### KlingApiService
 
 | Method | Description |
 |--------|-------------|
-| `testAuth()` | `Promise<boolean>` — verify API credentials without consuming quota |
+| `testConnection()` | `Promise<boolean>` — verify API credentials without consuming quota |
 | `submitTask(prompt, options?)` | Submit text-to-video task, returns task_id |
 | `pollTask(taskId)` | Poll until complete, failed, or timeout |
 | `submitAndDownload(prompt, dir, filename, options?)` | Full pipeline: submit → poll → download |
