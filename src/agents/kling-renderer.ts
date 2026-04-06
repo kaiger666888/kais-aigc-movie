@@ -13,6 +13,7 @@ export type RenderProgressCallback = (
  * Kling Renderer Agent — generates video clips for each shot.
  *
  * Uses the Kling 3.0 API with concurrency control and per-shot retry.
+ * Each shot is rendered independently — failure only affects that shot.
  */
 export class KlingRendererAgent {
   private readonly kling: KlingApiService;
@@ -37,17 +38,21 @@ export class KlingRendererAgent {
     const results = new Map<string, string>();
     const total = shots.shots.length;
     let completed = 0;
+    const errors: Array<{ shotId: string; error: string }> = [];
 
-    // Process shots in parallel (concurrency controlled by KlingApiService)
+    // Process shots in parallel (concurrency controlled by KlingApiService semaphore)
     const tasks = shots.shots.map(async (shot) => {
       onProgress?.(completed, total, shot.id, "started");
 
       try {
-        const videoPath = await this.kling.generateWithRetry(
+        const videoPath = await this.kling.submitAndDownload(
           shot.visualPrompt,
           outputDir,
-          { duration: shot.duration, aspectRatio: "16:9" },
-          `${shot.id}.mp4`,
+          shot.id,
+          {
+            duration: String(Math.max(5, Math.min(10, shot.duration))),
+            aspectRatio: "16:9",
+          },
         );
 
         completed++;
@@ -56,12 +61,25 @@ export class KlingRendererAgent {
       } catch (err) {
         completed++;
         const msg = err instanceof Error ? err.message : String(err);
+        errors.push({ shotId: shot.id, error: msg });
         onProgress?.(completed, total, shot.id, "failed");
-        throw new Error(`Render failed for shot ${shot.id}: ${msg}`);
       }
     });
 
     await Promise.all(tasks);
+
+    // Report partial failures but don't throw — let QC handle it
+    if (errors.length > 0 && errors.length === total) {
+      throw new Error(
+        `All ${total} shots failed to render:\n${errors.map((e) => `  ${e.shotId}: ${e.error}`).join("\n")}`,
+      );
+    }
+    if (errors.length > 0) {
+      console.warn(
+        `⚠️ ${errors.length}/${total} shots failed to render:\n${errors.map((e) => `  ${e.shotId}: ${e.error}`).join("\n")}`,
+      );
+    }
+
     return results;
   }
 }

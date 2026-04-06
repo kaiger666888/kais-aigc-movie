@@ -1,248 +1,313 @@
+import { createHmac } from "node:crypto";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfig } from "../config/default.js";
 
-/** Result of a completed Kling generation task */
-export interface TaskResult {
-  taskId: string;
-  status: "succeeded" | "failed";
-  /** URL to download the generated video */
-  videoUrl?: string;
-  /** Duration of the generated video in seconds */
-  duration?: number;
-  /** Error message if failed */
-  error?: string;
-}
+// ============================================================================
+// Kling JWT Authentication
+// ============================================================================
 
-/** Options when submitting a generation task */
-export interface SubmitOptions {
-  /** Desired duration in seconds (default 5) */
-  duration?: number;
-  /** Aspect ratio, e.g. "16:9" */
-  aspectRatio?: string;
-}
-
-const POLL_INTERVAL_MS = 5_000;
-const DEFAULT_TIMEOUT_MS = 300_000;
+/** Token validity duration in seconds (30 minutes) */
+const TOKEN_VALIDITY_SECONDS = 1800;
+/** Cache buffer in seconds (refresh 5 minutes before expiry) */
+const CACHE_BUFFER_SECONDS = 300;
 
 /**
- * Kling 3.0 async video generation API wrapper.
+ * Generate a Kling API JWT token.
  *
- * Implements submit → poll → download pattern with concurrency control and retries.
+ * Header: { alg: "HS256", typ: "JWT" }
+ * Payload: { iss: accessKey, exp: now + 1800, nbf: now - 5 }
+ * Signature: HMAC-SHA256 with secretKey
+ */
+function generateKlingJwt(accessKey: string, secretKey: string): string {
+  const now = Math.floor(Date.now() / 1000);
+
+  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(
+    JSON.stringify({
+      iss: accessKey,
+      exp: now + TOKEN_VALIDITY_SECONDS,
+      nbf: now - 5,
+    }),
+  ).toString("base64url");
+
+  const signatureInput = `${header}.${payload}`;
+  const signature = createHmac("sha256", secretKey)
+    .update(signatureInput)
+    .digest("base64url");
+
+  return `${signatureInput}.${signature}`;
+}
+
+/**
+ * Cached JWT with auto-refresh.
+ */
+class KlingAuthToken {
+  private token: string | null = null;
+  private expiry = 0;
+
+  constructor(
+    private readonly accessKey: string,
+    private readonly secretKey: string,
+  ) {}
+
+  get(): string {
+    const now = Math.floor(Date.now() / 1000);
+    if (this.token && this.expiry > now + CACHE_BUFFER_SECONDS) {
+      return this.token;
+    }
+    this.token = generateKlingJwt(this.accessKey, this.secretKey);
+    this.expiry = now + TOKEN_VALIDITY_SECONDS;
+    return this.token;
+  }
+}
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface KlingSubmitOptions {
+  /** Duration in seconds: "5" or "10" */
+  duration?: string;
+  /** Aspect ratio: "16:9" (default) or "9:16" */
+  aspectRatio?: string;
+  /** Model name (default "kling-v2-master") */
+  model?: string;
+}
+
+export interface KlingTaskResponse {
+  code: number;
+  message: string;
+  data: {
+    task_id: string;
+  };
+}
+
+export interface KlingTaskResult {
+  code: number;
+  message: string;
+  data: {
+    task_id: string;
+    task_status: string;
+    task_result?: {
+      videos?: Array<{ url: string; duration: string }>;
+      task_status: string;
+    };
+  };
+}
+
+// ============================================================================
+// Kling API Service
+// ============================================================================
+
+const DEFAULT_BASE_URL = "https://api-singapore.klingai.com";
+const DEFAULT_POLL_INTERVAL_MS = 3000;
+
+/**
+ * Kling 3.0 API Service.
+ *
+ * Handles async video generation:
+ *   submit(prompt) → task_id
+ *   poll(taskId) → TaskResult
+ *   download(taskId, outputDir) → local file path
+ *
+ * Uses JWT (HS256) authentication with Access Key + Secret Key.
+ * Implements concurrency control via a simple semaphore.
  */
 export class KlingApiService {
-  private readonly endpoint: string;
-  private readonly apiKey: string;
+  private readonly baseUrl: string;
+  private readonly auth: KlingAuthToken;
   private readonly maxConcurrent: number;
   private readonly maxRetries: number;
-  /** Tracks currently running slots for concurrency control */
-  private running = 0;
-  private readonly queue: Array<() => void> = [];
+  private readonly shotTimeoutMs: number;
+  private readonly pollIntervalMs: number;
+
+  /** Active request counter for concurrency control */
+  private activeCount = 0;
+  /** Resolvers waiting for a slot */
+  private waitQueue: Array<() => void> = [];
 
   constructor() {
     const cfg = getConfig();
-    this.endpoint = cfg.kling.apiEndpoint;
-    this.apiKey = cfg.kling.apiKey;
+    this.baseUrl = cfg.kling.apiEndpoint || DEFAULT_BASE_URL;
+    this.auth = new KlingAuthToken(cfg.kling.accessKey, cfg.kling.secretKey);
     this.maxConcurrent = cfg.kling.maxConcurrent;
     this.maxRetries = cfg.kling.maxRetries;
-  }
-
-  /** Acquire a concurrency slot */
-  private acquire(): Promise<void> {
-    if (this.running < this.maxConcurrent) {
-      this.running++;
-      return Promise.resolve();
-    }
-    return new Promise<void>((resolve) => {
-      this.queue.push(() => {
-        this.running++;
-        resolve();
-      });
-    });
-  }
-
-  /** Release a concurrency slot */
-  private release(): void {
-    this.running--;
-    const next = this.queue.shift();
-    if (next) next();
+    this.shotTimeoutMs = cfg.kling.shotTimeoutMs;
+    this.pollIntervalMs = DEFAULT_POLL_INTERVAL_MS;
   }
 
   /**
-   * Submit a video generation task.
+   * Submit a text-to-video generation task.
    *
-   * @param prompt - Visual prompt describing the scene.
-   * @param options - Duration, aspect ratio, etc.
-   * @returns The task ID for polling.
+   * @param prompt - Visual description in English for video generation.
+   * @param options - Duration, aspect ratio, model overrides.
+   * @returns The task_id for polling.
    */
   async submitTask(
     prompt: string,
-    options?: SubmitOptions,
+    options?: KlingSubmitOptions,
   ): Promise<string> {
-    const body = JSON.stringify({
-      model: "kling-3.0",
-      prompt,
-      duration: options?.duration ?? 5,
-      aspect_ratio: options?.aspectRatio ?? "16:9",
-    });
+    await this.acquireSlot();
 
-    const res = await fetch(`${this.endpoint}/videos/generations`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body,
-    });
+    try {
+      const payload = {
+        model: options?.model ?? "kling-v2-master",
+        prompt,
+        duration: options?.duration ?? "5",
+        aspect_ratio: options?.aspectRatio ?? "16:9",
+      };
 
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "unknown");
-      throw new Error(`Kling submit error ${res.status}: ${detail}`);
+      const res = await fetch(`${this.baseUrl}/v1/videos/text2video`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.auth.get()}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "unknown");
+        throw new Error(`Kling submit error ${res.status}: ${detail}`);
+      }
+
+      const json = (await res.json()) as KlingTaskResponse;
+      if (json.code !== 0 || !json.data?.task_id) {
+        throw new Error(`Kling submit failed: ${json.message}`);
+      }
+
+      return json.data.task_id;
+    } finally {
+      this.releaseSlot();
     }
-
-    const json = (await res.json()) as { data?: { task_id?: string } };
-    const taskId = json?.data?.task_id;
-    if (!taskId) {
-      throw new Error("Kling API did not return a task_id");
-    }
-    return taskId;
   }
 
   /**
    * Poll a task until it completes or times out.
    *
-   * @param taskId - The task ID returned by submitTask.
-   * @param timeoutMs - Maximum time to wait (default 5 min).
-   * @returns Final TaskResult.
+   * @param taskId - The task ID from submitTask.
+   * @returns The final task result.
    */
-  async pollTask(
-    taskId: string,
-    timeoutMs: number = DEFAULT_TIMEOUT_MS,
-  ): Promise<TaskResult> {
-    const deadline = Date.now() + timeoutMs;
+  async pollTask(taskId: string): Promise<KlingTaskResult> {
+    const deadline = Date.now() + this.shotTimeoutMs;
 
     while (Date.now() < deadline) {
       const res = await fetch(
-        `${this.endpoint}/videos/generations/${taskId}`,
+        `${this.baseUrl}/v1/videos/text2video/${taskId}`,
         {
-          headers: { Authorization: `Bearer ${this.apiKey}` },
+          headers: {
+            Authorization: `Bearer ${this.auth.get()}`,
+          },
         },
       );
 
       if (!res.ok) {
-        throw new Error(
-          `Kling poll error ${res.status}: ${await res.text().catch(() => "")}`,
-        );
+        const detail = await res.text().catch(() => "unknown");
+        throw new Error(`Kling poll error ${res.status}: ${detail}`);
       }
 
-      const json = (await res.json()) as {
-        data?: {
-          task_status?: string;
-          task_result?: {
-            videos?: Array<{ url: string; duration: number }>;
-          };
-        };
-      };
+      const json = (await res.json()) as KlingTaskResult;
+      const status = json.data?.task_status;
 
-      const status = json?.data?.task_status;
-      if (status === "succeed" || status === "failed") {
-        const video = json?.data?.task_result?.videos?.[0];
-        return {
-          taskId,
-          status: status === "succeed" ? "succeeded" : "failed",
-          videoUrl: video?.url,
-          duration: video?.duration,
-          error: status === "failed" ? "Task failed on server" : undefined,
-        };
+      if (status === "succeed") {
+        return json;
+      }
+      if (status === "failed") {
+        throw new Error(`Kling task ${taskId} failed: ${json.message}`);
       }
 
-      // Still processing — wait before next poll
-      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      // Still processing — wait and retry
+      await sleep(this.pollIntervalMs);
     }
 
-    return { taskId, status: "failed", error: "Polling timed out" };
+    throw new Error(`Kling task ${taskId} timed out after ${this.shotTimeoutMs}ms`);
   }
 
   /**
-   * Download the generated video to a local directory.
+   * Submit a task, poll until complete, and download the video.
    *
-   * @param videoUrl - URL returned by pollTask.
-   * @param outputDir - Directory to save the file in.
-   * @param fileName - File name (default from URL).
-   * @returns Absolute path to the saved file.
-   */
-  async downloadResult(
-    videoUrl: string,
-    outputDir: string,
-    fileName?: string,
-  ): Promise<string> {
-    await mkdir(outputDir, { recursive: true });
-
-    const res = await fetch(videoUrl);
-    if (!res.ok) {
-      throw new Error(`Kling download error ${res.status}`);
-    }
-
-    const name =
-      fileName ??
-      new URL(videoUrl).pathname.split("/").pop() ??
-      "output.mp4";
-    const filePath = join(outputDir, name);
-    const buf = Buffer.from(await res.arrayBuffer());
-    await writeFile(filePath, buf);
-    return filePath;
-  }
-
-  /**
-   * Submit, poll, and download with concurrency control and retry.
-   *
-   * @param prompt - Visual prompt.
-   * @param outputDir - Where to save the video.
+   * @param prompt - Visual description.
+   * @param outputDir - Directory to save the video.
+   * @param filename - Output filename (without extension).
    * @param options - Generation options.
-   * @param fileName - Output file name.
    * @returns Path to the downloaded video file.
    */
-  async generateWithRetry(
+  async submitAndDownload(
     prompt: string,
     outputDir: string,
-    options?: SubmitOptions,
-    fileName?: string,
+    filename: string,
+    options?: KlingSubmitOptions,
   ): Promise<string> {
-    await this.acquire();
-    try {
-      let lastError: Error | undefined;
+    // Submit with retries
+    let taskId: string | null = null;
+    let lastError: Error | null = null;
 
-      for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-        try {
-          const taskId = await this.submitTask(prompt, options);
-          const result = await this.pollTask(taskId);
-
-          if (result.status === "succeeded" && result.videoUrl) {
-            return await this.downloadResult(
-              result.videoUrl,
-              outputDir,
-              fileName,
-            );
-          }
-
-          lastError = new Error(
-            result.error ?? "Generation failed with no error message",
-          );
-        } catch (err) {
-          lastError =
-            err instanceof Error ? err : new Error(String(err));
-        }
-
-        // Exponential back-off before retry
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        taskId = await this.submitTask(prompt, options);
+        break;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
         if (attempt < this.maxRetries) {
-          const delayMs = 2 ** (attempt - 1) * 1000;
-          await new Promise((r) => setTimeout(r, delayMs));
+          await sleep(1000 * Math.pow(2, attempt)); // exponential backoff
         }
       }
+    }
 
-      throw lastError ?? new Error("All retries exhausted");
-    } finally {
-      this.release();
+    if (!taskId) {
+      throw new Error(
+        `Kling submit failed after ${this.maxRetries} retries: ${lastError?.message}`,
+      );
+    }
+
+    // Poll for completion
+    const result = await this.pollTask(taskId);
+    const videoUrl = result.data?.task_result?.videos?.[0]?.url;
+    if (!videoUrl) {
+      throw new Error(`Kling task ${taskId} completed but no video URL`);
+    }
+
+    // Download
+    await mkdir(outputDir, { recursive: true });
+    const outPath = join(outputDir, `${filename}.mp4`);
+
+    const videoRes = await fetch(videoUrl);
+    if (!videoRes.ok || !videoRes.body) {
+      throw new Error(`Failed to download video from ${videoUrl}`);
+    }
+
+    const buffer = Buffer.from(await videoRes.arrayBuffer());
+    await writeFile(outPath, buffer);
+
+    return outPath;
+  }
+
+  // ============================================================================
+  // Concurrency Control (simple semaphore)
+  // ============================================================================
+
+  private async acquireSlot(): Promise<void> {
+    if (this.activeCount < this.maxConcurrent) {
+      this.activeCount++;
+      return;
+    }
+    // Wait for a slot
+    await new Promise<void>((resolve) => {
+      this.waitQueue.push(resolve);
+    });
+  }
+
+  private releaseSlot(): void {
+    this.activeCount--;
+    if (this.waitQueue.length > 0) {
+      const next = this.waitQueue.shift();
+      this.activeCount++;
+      next?.();
     }
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

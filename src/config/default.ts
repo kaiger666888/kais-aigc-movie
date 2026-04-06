@@ -7,14 +7,18 @@ const AppConfigSchema = z.object({
     chatId: z.string().optional(),
   }),
   glm: z.object({
-    /** GLM-TTS API key */
+    /** GLM-TTS API key (Bearer token) */
     ttsApiKey: z.string().min(1, "GLM_TTS_API_KEY is required"),
     /** GLM-TTS endpoint */
-    ttsEndpoint: z.string().url(),
+    ttsEndpoint: z.string().url().default("https://open.bigmodel.cn/api/paas/v4/audio/speech"),
   }),
   kling: z.object({
-    apiKey: z.string().min(1, "KLING_API_KEY is required"),
-    apiEndpoint: z.string().url(),
+    /** Kling API Access Key */
+    accessKey: z.string().min(1, "KLING_ACCESS_KEY is required"),
+    /** Kling API Secret Key */
+    secretKey: z.string().min(1, "KLING_SECRET_KEY is required"),
+    /** Kling API base URL */
+    apiEndpoint: z.string().default("https://api-singapore.klingai.com"),
     /** Max parallel video generation tasks */
     maxConcurrent: z.number().int().min(1).max(5).default(2),
     /** Max retries per shot */
@@ -46,20 +50,15 @@ export function loadConfig(): AppConfig {
     },
     glm: {
       ttsApiKey: process.env.GLM_TTS_API_KEY ?? "",
-      ttsEndpoint:
-        process.env.GLM_TTS_ENDPOINT ??
-        "https://open.bigmodel.cn/api/paas/v4/audio/speech",
+      ttsEndpoint: process.env.GLM_TTS_ENDPOINT,
     },
     kling: {
-      apiKey: process.env.KLING_API_KEY ?? "",
-      apiEndpoint:
-        process.env.KLING_API_URL ?? "https://api.klingai.com/v1",
+      accessKey: process.env.KLING_ACCESS_KEY ?? "",
+      secretKey: process.env.KLING_SECRET_KEY ?? "",
+      apiEndpoint: process.env.KLING_API_URL,
       maxConcurrent: parseInt(process.env.KLING_MAX_CONCURRENT ?? "2", 10),
       maxRetries: parseInt(process.env.KLING_MAX_RETRIES ?? "3", 10),
-      shotTimeoutMs: parseInt(
-        process.env.KLING_SHOT_TIMEOUT_MS ?? "300000",
-        10,
-      ),
+      shotTimeoutMs: parseInt(process.env.KLING_SHOT_TIMEOUT_MS ?? "300000", 10),
     },
     episode: {
       maxShots: parseInt(process.env.EPISODE_MAX_SHOTS ?? "8", 10),

@@ -7,7 +7,7 @@ import type { QCReport } from "../types/qc-report.js";
 import type { EpisodeState } from "../types/episode-state.js";
 import { EpisodeStateManager } from "../utils/state-manager.js";
 import { FileManager } from "../utils/file-manager.js";
-import { WriterAgent, type WriterOutput } from "./writer.js";
+import { WriterAgent } from "./writer.js";
 import { VoiceDirectorAgent } from "./voice-director.js";
 import { KlingRendererAgent } from "./kling-renderer.js";
 import { EditorAgent } from "./editor.js";
