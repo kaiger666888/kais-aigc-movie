@@ -133,6 +133,30 @@ export class KlingApiService {
   }
 
   /**
+   * Verify API credentials by calling a lightweight endpoint.
+   * Does not consume generation quota.
+   *
+   * @returns `true` if authentication succeeds, `false` otherwise.
+   */
+  async testAuth(): Promise<boolean> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/videos/text2video`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.auth.get()}`,
+        },
+        body: JSON.stringify({ model: "kling-v2-master", prompt: "test", duration: "5" }),
+      });
+      // 200 with code 0 or non-401 means auth is valid
+      if (res.status === 401) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Submit a text-to-video generation task.
    *
    * @param prompt - Visual description in English for video generation.

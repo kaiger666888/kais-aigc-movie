@@ -107,6 +107,11 @@ export async function addTransition(
     return;
   }
 
+  // Probe all clips to get actual durations for dynamic offset calculation
+  const durations = await Promise.all(
+    inputPaths.map((p) => probeVideo(p).then((info) => info.duration)),
+  );
+
   const cmd = ffmpeg();
   const fadeDuration = 0.3;
 
@@ -116,14 +121,18 @@ export async function addTransition(
 
   const filters: string[] = [];
   let lastLabel = "[0:v]";
+  let cumulativeDuration = durations[0] ?? 0;
+
   for (let i = 1; i < inputPaths.length; i++) {
     const outLabel =
       i === inputPaths.length - 1 ? "[outv]" : `[v${i}]`;
-    const offset = 5; // simplified: assume ~5s per clip
+    // Offset = accumulated duration minus all preceding fade overlaps
+    const offset = Math.max(0, cumulativeDuration - fadeDuration * i);
     filters.push(
       `${lastLabel}[${i}:v]xfade=transition=${type}:duration=${fadeDuration}:offset=${offset}${outLabel}`,
     );
     lastLabel = outLabel;
+    cumulativeDuration += durations[i] ?? 0;
   }
 
   cmd.complexFilter(filters, "[outv]")

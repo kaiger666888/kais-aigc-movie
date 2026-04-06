@@ -1,5 +1,31 @@
 import { getConfig } from "../config.js";
 
+// ============================================================================
+// Voice Presets
+// ============================================================================
+
+/** Built-in GLM-TTS voice preset identifiers */
+export const VoicePresets = [
+  "tongtong",
+  "male-narrator",
+  "male-qn-qingse",
+  "male-qn-jingying",
+  "male-qn-badao",
+  "female-shuangkuaisisi",
+  "female-shaonv",
+  "female-yujie",
+  "female-chengshu",
+  "female-tianmei",
+] as const;
+
+/** Voice preset string type */
+export type VoicePreset = (typeof VoicePresets)[number];
+
+/** List all available built-in voice presets. */
+export function listVoices(): readonly string[] {
+  return VoicePresets;
+}
+
 /** Options for a single TTS synthesis call */
 export interface SynthesizeOptions {
   /** Voice preset name (e.g. "tongtong", "male-qn-qingse", "female-shaonv"). Defaults to "tongtong". */

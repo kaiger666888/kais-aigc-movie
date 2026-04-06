@@ -1,5 +1,5 @@
 // Config
-export { loadConfig, getConfig, type Config } from "./config.js";
+export { loadConfig, getConfig, checkFFmpeg, type Config } from "./config.js";
 
 // Types
 export {
@@ -46,8 +46,11 @@ export {
 
 export {
   GlmTtsService,
+  VoicePresets,
+  listVoices,
   type SynthesizeOptions,
   type SynthesizeItem,
+  type VoicePreset,
 } from "./services/glm-tts.js";
 
 // Utils

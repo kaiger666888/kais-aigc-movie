@@ -16,7 +16,7 @@ const ConfigSchema = z.object({
     /** Kling API Secret Key */
     secretKey: z.string().min(1, "KLING_SECRET_KEY is required"),
     /** Kling API base URL */
-    apiUrl: z.string().default("https://api-singapore.klingai.com"),
+    apiUrl: z.string().default("https://api.klingai.com"),
     /** Max parallel video generation tasks */
     maxConcurrent: z.number().int().min(1).max(5).default(2),
     /** Max retries per shot */
@@ -32,6 +32,18 @@ const ConfigSchema = z.object({
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
+
+/** Check if ffmpeg/ffprobe is available on the system PATH. */
+export async function checkFFmpeg(): Promise<boolean> {
+  try {
+    const { execFile } = await import("node:child_process");
+    return await new Promise<boolean>((resolve) => {
+      execFile("ffmpeg", ["-version"], (err) => resolve(!err));
+    });
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Build and validate configuration from environment variables.
@@ -62,10 +74,17 @@ export function loadConfig(): Config {
 /** Singleton — loaded once on first access */
 let _config: Config | null = null;
 
-/** Get the global config instance (lazy-loaded) */
+/** Get the global config instance (lazy-loaded). Warns if ffmpeg is missing. */
 export function getConfig(): Config {
   if (!_config) {
     _config = loadConfig();
+    // Non-blocking ffmpeg check
+    checkFFmpeg().then((ok) => {
+      if (!ok) {
+        console.warn("[kais-aigc-movie] ⚠️  ffmpeg not found on PATH. Video operations will fail.");
+        console.warn("[kais-aigc-movie]    Install ffmpeg: https://ffmpeg.org/download.html");
+      }
+    });
   }
   return _config;
 }
