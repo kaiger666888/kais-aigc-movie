@@ -5,12 +5,15 @@ import { Showrunner, type EpisodeProgressCallback } from "./agents/showrunner.js
 /**
  * Create and configure the Telegram bot.
  *
+ * @param spawnGlm - Function to spawn a GLM-5.1 sub-agent via OpenClaw
+ *                   sessions_spawn. This is injected by the OpenClaw
+ *                   integration layer (index.ts).
  * @returns A configured grammy Bot instance (not yet started).
  */
-export function createBot(): Bot {
+export function createBot(spawnGlm: (task: string) => Promise<string>): Bot {
   const config = getConfig();
   const bot = new Bot(config.telegram.botToken);
-  const showrunner = new Showrunner();
+  const showrunner = new Showrunner(spawnGlm);
 
   // ── /start ────────────────────────────────────────────────────
   bot.command("start", (ctx) => {

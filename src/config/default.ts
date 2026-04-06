@@ -7,9 +7,8 @@ const AppConfigSchema = z.object({
     chatId: z.string().optional(),
   }),
   glm: z.object({
-    apiKey: z.string().min(1, "GLM_API_KEY is required"),
-    /** GLM-5.1 chat completion endpoint */
-    chatEndpoint: z.string().url(),
+    /** GLM-TTS API key */
+    ttsApiKey: z.string().min(1, "GLM_TTS_API_KEY is required"),
     /** GLM-TTS endpoint */
     ttsEndpoint: z.string().url(),
   }),
@@ -46,10 +45,7 @@ export function loadConfig(): AppConfig {
       chatId: process.env.TELEGRAM_CHAT_ID,
     },
     glm: {
-      apiKey: process.env.GLM_API_KEY ?? process.env.GLM_TTS_API_KEY ?? "",
-      chatEndpoint:
-        process.env.GLM_CHAT_ENDPOINT ??
-        "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      ttsApiKey: process.env.GLM_TTS_API_KEY ?? "",
       ttsEndpoint:
         process.env.GLM_TTS_ENDPOINT ??
         "https://open.bigmodel.cn/api/paas/v4/audio/speech",

@@ -30,7 +30,7 @@ export class GlmTtsService {
   constructor() {
     const cfg = getConfig();
     this.endpoint = cfg.glm.ttsEndpoint;
-    this.apiKey = cfg.glm.apiKey;
+    this.apiKey = cfg.glm.ttsApiKey;
   }
 
   /**
