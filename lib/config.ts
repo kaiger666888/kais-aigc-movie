@@ -16,7 +16,7 @@ const ConfigSchema = z.object({
     /** Kling API Secret Key */
     secretKey: z.string().min(1, "KLING_SECRET_KEY is required"),
     /** Kling API base URL */
-    apiUrl: z.string().default("https://api.klingai.com"),
+    apiUrl: z.string().default("https://api-beijing.klingai.com"),
     /** Max parallel video generation tasks */
     maxConcurrent: z.number().int().min(1).max(5).default(2),
     /** Max retries per shot */
