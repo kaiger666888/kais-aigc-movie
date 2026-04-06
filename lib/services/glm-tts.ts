@@ -2,7 +2,7 @@ import { getConfig } from "../config.js";
 
 /** Options for a single TTS synthesis call */
 export interface SynthesizeOptions {
-  /** Voice preset: "male", "female", etc. */
+  /** Voice preset name (e.g. "tongtong", "male-qn-qingse", "female-shaonv"). Defaults to "tongtong". */
   voice?: string;
   /** Speech rate multiplier (0.5 – 2.0) */
   speed?: number;
@@ -52,9 +52,9 @@ export class GlmTtsService {
       const body = JSON.stringify({
         model: "glm-tts",
         input: text,
-        voice: options?.voice ?? "female",
+        voice: options?.voice ?? "tongtong",
         speed: options?.speed ?? 1.0,
-        response_format: "mp3",
+        response_format: "wav",
       });
 
       const res = await fetch(this.endpoint, {

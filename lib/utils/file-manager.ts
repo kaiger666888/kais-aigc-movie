@@ -6,7 +6,7 @@ import { getConfig } from "../config.js";
  * Manages episode directory structure on disk.
  *
  * Each episode lives under `<episodesDir>/<episodeId>/` with sub-directories:
- * - `audio/` — TTS-generated MP3 files
+ * - `audio/` — TTS-generated WAV files
  * - `shots/` — Kling-generated video clips
  * - output at `rough_cut.mp4`
  */
@@ -45,9 +45,9 @@ export class FileManager {
     return join(this.baseDir, episodeId, "rough_cut.mp4");
   }
 
-  /** Return path to a specific audio file. */
+  /** Return path to a specific audio file (WAV format). */
   getAudioPath(episodeId: string, shotId: string): string {
-    return join(this.baseDir, episodeId, "audio", `${shotId}.mp3`);
+    return join(this.baseDir, episodeId, "audio", `${shotId}.wav`);
   }
 
   /** Return path to a specific shot video file. */
