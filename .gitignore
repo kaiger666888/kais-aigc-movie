@@ -1,0 +1,9 @@
+node_modules/
+dist/
+episodes/**/*.mp4
+episodes/**/*.wav
+episodes/**/*.mp3
+!episodes/.gitkeep
+.env
+*.tsbuildinfo
+.DS_Store
