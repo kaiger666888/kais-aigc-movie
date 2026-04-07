@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BGM Test</title></head><body style="background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif">
+<h2>BGM 诊断</h2>
+<div id="log" style="font-size:14px;margin:20px;white-space:pre-wrap;text-align:left;max-width:400px"></div>
+<button id="btn" style="padding:12px 32px;font-size:18px;border-radius:8px;border:none;background:#c8a050;color:#fff;cursor:pointer">点击播放 BGM</button>
+<script>
+const log = document.getElementById('log');
+const btn = document.getElementById('btn');
+function msg(t) { log.textContent += t + '\n'; }
+
+msg('Audio context: ' + (window.AudioContext || window.webkitAudioContext ? 'supported' : 'NOT supported'));
+
+let audioCtx, source, gainNode;
+btn.addEventListener('click', async () => {
+  msg('--- Click detected ---');
+  
+  try {
+    // Method 1: Audio element
+    const audio = new Audio('assets/bgm.mp3');
+    audio.volume = 0.5;
+    audio.loop = true;
+    
+    audio.addEventListener('canplaythrough', () => msg('✅ Audio canplaythrough'));
+    audio.addEventListener('error', (e) => msg('❌ Audio error: ' + e.error?.message));
+    audio.addEventListener('playing', () => msg('✅ Audio is playing'));
+    
+    await audio.play();
+    msg('✅ audio.play() succeeded');
+  } catch(e) {
+    msg('❌ audio.play() failed: ' + e.message);
+  }
+
+  try {
+    // Method 2: Fetch + decode
+    const resp = await fetch('assets/bgm.mp3');
+    msg('Fetch status: ' + resp.status + ' size: ' + resp.headers.get('content-length'));
+    const buf = await resp.arrayBuffer();
+    msg('ArrayBuffer: ' + buf.byteLength + ' bytes');
+    
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    msg('AudioContext state: ' + audioCtx.state);
+    
+    const decoded = await audioCtx.decodeAudioData(buf);
+    msg('✅ Decoded: ' + decoded.duration.toFixed(1) + 's, ' + decoded.sampleRate + 'Hz, ' + decoded.numberOfChannels + 'ch');
+  } catch(e) {
+    msg('❌ Fetch/decode failed: ' + e.message);
+  }
+});
+</script></body></html>

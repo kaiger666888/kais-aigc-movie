@@ -1,0 +1,5 @@
+episodes/*/images/*.png filter=lfs diff=lfs merge=lfs -text
+episodes/*/images/*.jpg filter=lfs diff=lfs merge=lfs -text
+episodes/*/assets/*.mp3 filter=lfs diff=lfs merge=lfs -text
+episodes/*/assets/*.png filter=lfs diff=lfs merge=lfs -text
+episodes/*/assets/*.jpg filter=lfs diff=lfs merge=lfs -text

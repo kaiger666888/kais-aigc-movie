@@ -1,6 +1,7 @@
 # Environment
 .env
 *.env
+!bgm-library/.env
 
 # Build output
 dist/
@@ -12,14 +13,6 @@ lib/*.js
 lib/*.d.ts
 lib/*.js.map
 lib/*.d.ts.map
-
-# Episode binary outputs
-episodes/*/images/
-episodes/*/assets/*.mp3
-episodes/*/assets/*.png
-episodes/*/assets/*.jpg
-episodes/*/story.html
-episodes/*/bgm-test.html
 
 # Node
 node_modules/
