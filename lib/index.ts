@@ -67,11 +67,11 @@ export {
 
 export {
   GlmTtsService,
-  VoicePresets,
+  SystemVoices,
+  type SystemVoiceId,
   listVoices,
   type SynthesizeOptions,
   type SynthesizeItem,
-  type VoicePreset,
 } from "./services/glm-tts.js";
 
 // Utils
