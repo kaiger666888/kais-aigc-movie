@@ -11,11 +11,21 @@ export {
 
 export {
   ShotStatusEnum,
+  EmotionEnum,
+  PaceEnum,
   ShotSchema,
   ShotsConfigSchema,
+  EpisodeConfigSchema,
+  CostReportSchema,
+  TemplateSchema,
   type ShotStatus,
+  type Emotion,
+  type Pace,
   type Shot,
   type ShotsConfig,
+  type EpisodeConfig,
+  type CostReport,
+  type Template,
 } from "./shots.js";
 
 export {

@@ -1,0 +1,25 @@
+{
+  "id": "ep_20260407_\u6df1\u591c\u5496\u5561\u9986\u7684\u79d8\u5bc6",
+  "topic": "\u6df1\u591c\u5496\u5561\u9986\u7684\u79d8\u5bc6",
+  "phase": "material",
+  "status": "material-done",
+  "createdAt": "2026-04-07T12:36:25.827Z",
+  "steps": {
+    "writer": true,
+    "images": true,
+    "voice": true,
+    "music": true,
+    "subtitles": true,
+    "videoTasks": true,
+    "storyHtml": true,
+    "evaluation": true
+  },
+  "config": {
+    "shotCount": 6,
+    "duration": 45,
+    "voice": "male-narrator",
+    "style": "comic",
+    "ratio": "9:16"
+  },
+  "updatedAt": "2026-04-07T13:02:44.311Z"
+}

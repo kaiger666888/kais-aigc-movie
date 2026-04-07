@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>深夜咖啡馆的秘密</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: #0a0a0a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    overflow: hidden;
+  }
+
+  .player {
+    position: relative;
+    width: min(100vw, calc(100vh * 9 / 16));
+    height: min(100vh, calc(100vw * 16 / 9));
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 0 60px rgba(255, 180, 50, 0.15);
+  }
+
+  /* Image layers */
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.2s ease-in-out;
+    z-index: 1;
+  }
+  .slide.active { opacity: 1; z-index: 2; }
+  .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Ken Burns effect */
+  .slide.kenburns-in img {
+    animation: kenburns-in 8s ease-out forwards;
+  }
+  .slide.kenburns-out img {
+    animation: kenburns-out 8s ease-out forwards;
+  }
+  @keyframes kenburns-in {
+    from { transform: scale(1.08) translate(-1%, -1%); }
+    to   { transform: scale(1.0) translate(0, 0); }
+  }
+  @keyframes kenburns-out {
+    from { transform: scale(1.0); }
+    to   { transform: scale(1.12) translate(0.5%, 0.5%); }
+  }
+
+  /* Vignette overlay */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+  }
+
+  /* Subtitle */
+  .subtitle-container {
+    position: absolute;
+    bottom: 8%;
+    left: 0; right: 0;
+    z-index: 10;
+    text-align: center;
+    padding: 0 8%;
+  }
+  .subtitle {
+    display: inline-block;
+    color: #fff;
+    font-size: clamp(14px, 3.5vw, 22px);
+    line-height: 1.8;
+    letter-spacing: 0.08em;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.8), 0 0 30px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .subtitle.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .subtitle.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  /* Speaker label */
+  .speaker-label {
+    display: block;
+    font-size: clamp(10px, 2vw, 14px);
+    color: rgba(255, 200, 100, 0.8);
+    margin-bottom: 6px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* Title card */
+  .title-card {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+  .title-card.visible { opacity: 1; }
+  .title-card h1 {
+    font-size: clamp(20px, 5.5vw, 36px);
+    color: #ffe4b5;
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 30px rgba(255, 180, 50, 0.4);
+    margin-bottom: 12px;
+    font-weight: 300;
+  }
+  .title-card .genre {
+    font-size: clamp(10px, 2.5vw, 14px);
+    color: rgba(255, 228, 181, 0.6);
+    letter-spacing: 0.3em;
+  }
+
+  /* End card */
+  .end-card {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.8);
+    opacity: 0;
+    transition: opacity 2s ease;
+  }
+  .end-card.visible { opacity: 1; }
+  .end-card p {
+    font-size: clamp(12px, 3vw, 18px);
+    color: rgba(255, 228, 181, 0.7);
+    letter-spacing: 0.15em;
+  }
+
+  /* Start overlay */
+  .start-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.85);
+    cursor: pointer;
+    transition: opacity 0.8s ease;
+  }
+  .start-overlay.hidden { opacity: 0; pointer-events: none; }
+  .start-overlay .play-icon {
+    width: 64px; height: 64px;
+    border: 2px solid rgba(255, 200, 100, 0.6);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .start-overlay .play-icon::after {
+    content: '';
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 10px 0 10px 18px;
+    border-color: transparent transparent transparent rgba(255, 200, 100, 0.8);
+    margin-left: 4px;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.7; }
+  }
+  .start-overlay .start-text {
+    color: rgba(255, 228, 181, 0.7);
+    font-size: clamp(12px, 3vw, 16px);
+    letter-spacing: 0.15em;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: rgba(255, 200, 100, 0.5);
+    z-index: 30;
+    transition: width 0.3s linear;
+  }
+
+  /* Controls */
+  .controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    display: flex;
+    gap: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .player:hover .controls { opacity: 1; }
+  .controls button {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+  .controls button:hover {
+    background: rgba(255, 200, 100, 0.3);
+    border-color: rgba(255, 200, 100, 0.5);
+  }
+
+  /* Shot counter */
+  .shot-counter {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 15;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+  }
+
+  /* BGM indicator */
+  .bgm-indicator {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bgm-bars {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 12px;
+  }
+  .bgm-bars span {
+    width: 2px;
+    background: rgba(255, 200, 100, 0.5);
+    border-radius: 1px;
+    animation: bgmBar 0.8s ease-in-out infinite alternate;
+  }
+  .bgm-bars span:nth-child(1) { height: 4px; animation-delay: 0s; }
+  .bgm-bars span:nth-child(2) { height: 8px; animation-delay: 0.15s; }
+  .bgm-bars span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+  .bgm-bars span:nth-child(4) { height: 10px; animation-delay: 0.1s; }
+  @keyframes bgmBar {
+    from { transform: scaleY(0.4); }
+    to   { transform: scaleY(1); }
+  }
+  .bgm-bars.paused span { animation-play-state: paused; }
+</style>
+</head>
+<body>
+
+<div class="player" id="player">
+  <!-- Slides will be injected by JS -->
+  <div class="vignette"></div>
+  <div class="subtitle-container">
+    <span class="subtitle" id="subtitle"></span>
+  </div>
+  <div class="title-card" id="titleCard">
+    <h1>深夜咖啡馆的秘密</h1>
+    <span class="genre">都市治愈 · 漫画风</span>
+  </div>
+  <div class="end-card" id="endCard">
+    <p>— 全片完 —</p>
+  </div>
+  <div class="start-overlay" id="startOverlay">
+    <div class="play-icon"></div>
+    <div class="start-text">点击播放</div>
+  </div>
+  <div class="bgm-indicator">
+    <div class="bgm-bars" id="bgmBars">
+      <span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+  <div class="shot-counter" id="shotCounter"></div>
+  <div class="progress-bar" id="progressBar"></div>
+  <div class="controls">
+    <button id="btnPlay" title="播放/暂停">▶</button>
+    <button id="btnReplay" title="重新播放">↺</button>
+  </div>
+</div>
+
+<!-- BGM created dynamically in JS to avoid autoplay policy issues -->
+
+<script>
+// ========== CONFIG ==========
+const SHOTS = [
+  {
+    id: "shot_1",
+    duration: 7000,
+    image: "images/shot_1_first_720.jpg",
+    subtitle: "城市的深夜，总有一盏灯为你亮着。",
+    speaker: "旁白",
+    transition: "fade",
+    emotion: "neutral",
+    kenburns: "in"
+  },
+  {
+    id: "shot_2",
+    duration: 6000,
+    image: "images/shot_2_first_720.jpg",
+    subtitle: "小夏已经很久没有好好坐下来了。",
+    speaker: "旁白",
+    transition: "fade",
+    emotion: "sad",
+    kenburns: "out"
+  },
+  {
+    id: "shot_3",
+    duration: 7000,
+    image: "images/shot_3_first_720.jpg",
+    subtitle: "老陈没有多问，只是默默做了一杯热可可。",
+    speaker: "旁白",
+    transition: "cut",
+    emotion: "warm",
+    kenburns: "in"
+  },
+  {
+    id: "shot_4",
+    duration: 6000,
+    image: "images/shot_4_first_720.jpg",
+    subtitle: "杯子下面压着一张纸条。",
+    speaker: "旁白",
+    transition: "fade",
+    emotion: "warm",
+    kenburns: "out"
+  },
+  {
+    id: "shot_5",
+    duration: 7000,
+    image: "images/shot_5_first_720.jpg",
+    subtitle: "「姑娘，再难的路，也有人等你。」",
+    speaker: "旁白",
+    transition: "fade",
+    emotion: "warm",
+    kenburns: "in"
+  },
+  {
+    id: "shot_6",
+    duration: 7000,
+    image: "images/shot_6_first_720.jpg",
+    subtitle: "雨停了，明天会更好的。",
+    speaker: "旁白",
+    transition: "fade",
+    emotion: "warm",
+    kenburns: "out"
+  }
+];
+
+const TITLE_DURATION = 3000;   // title card show time
+const SUBTITLE_OFFSET = 800;  // subtitle appears after image
+const SUBTITLE_BEFORE_END = 1200; // subtitle fades before shot ends
+const END_DURATION = 4000;
+
+// ========== STATE ==========
+let currentShot = -1;
+let isPlaying = false;
+let timeoutIds = [];
+let audioContext = null;
+let bgm = null; // created on user click
+
+const player = document.getElementById('player');
+const subtitleEl = document.getElementById('subtitle');
+const titleCard = document.getElementById('titleCard');
+const endCard = document.getElementById('endCard');
+const progressBar = document.getElementById('progressBar');
+const shotCounter = document.getElementById('shotCounter');
+const bgmBars = document.getElementById('bgmBars');
+const btnPlay = document.getElementById('btnPlay');
+
+// ========== INIT ==========
+function init() {
+  // Create slide elements
+  SHOTS.forEach((shot, i) => {
+    const div = document.createElement('div');
+    div.className = 'slide';
+    div.id = `slide-${i}`;
+    const img = document.createElement('img');
+    img.src = shot.image;
+    img.alt = shot.id;
+    div.appendChild(img);
+    player.insertBefore(div, player.querySelector('.vignette'));
+  });
+
+  // Preload all images
+  SHOTS.forEach(shot => {
+    const img = new Image();
+    img.src = shot.image;
+  });
+
+  showTitle();
+}
+
+// ========== TITLE ==========
+function showTitle() {
+  titleCard.classList.add('visible');
+  schedule(() => {
+    titleCard.classList.remove('visible');
+    schedule(() => startSlideshow(), 1500);
+  }, TITLE_DURATION);
+}
+
+// ========== SLIDESHOW ==========
+function startSlideshow() {
+  bgm.volume = 0.5;
+  const playPromise = bgm.play();
+  if (playPromise) {
+    playPromise.catch(e => console.warn('BGM play failed:', e));
+  }
+
+  bgmBars.classList.remove('paused');
+  btnPlay.textContent = '⏸';
+  isPlaying = true;
+  showShot(0);
+}
+
+function showShot(index) {
+  if (index >= SHOTS.length) {
+    showEnd();
+    return;
+  }
+
+  currentShot = index;
+  const shot = SHOTS[index];
+  const slide = document.getElementById(`slide-${index}`);
+
+  // Deactivate all slides
+  document.querySelectorAll('.slide').forEach(s => {
+    s.classList.remove('active', 'kenburns-in', 'kenburns-out');
+  });
+
+  // Activate current
+  slide.classList.add('active', `kenburns-${shot.kenburns}`);
+
+  // Shot counter
+  shotCounter.textContent = `${index + 1} / ${SHOTS.length}`;
+
+  // Subtitle timing
+  showSubtitle(shot.subtitle, shot.speaker, shot.duration);
+
+  // Progress
+  updateProgress(index);
+
+  // Schedule next shot
+  schedule(() => showShot(index + 1), shot.duration);
+}
+
+// ========== SUBTITLE ==========
+function showSubtitle(text, speaker, shotDuration) {
+  subtitleEl.innerHTML = `<span class="speaker-label">${speaker}</span>${text}`;
+  subtitleEl.className = 'subtitle';
+
+  // Show after offset
+  schedule(() => {
+    subtitleEl.classList.add('visible');
+  }, SUBTITLE_OFFSET);
+
+  // Fade out before end
+  schedule(() => {
+    subtitleEl.classList.remove('visible');
+    subtitleEl.classList.add('fade-out');
+  }, shotDuration - SUBTITLE_BEFORE_END);
+}
+
+// ========== END ==========
+function showEnd() {
+  // Fade out BGM
+  const fadeOut = setInterval(() => {
+    bgm.volume -= 0.01;
+    if (bgm.volume <= 0) {
+      clearInterval(fadeOut);
+      bgm.pause();
+      bgmBars.classList.add('paused');
+    }
+  }, 100);
+
+  schedule(() => {
+    endCard.classList.add('visible');
+  }, 1000);
+
+  // Allow replay
+  schedule(() => {
+    isPlaying = false;
+    btnPlay.textContent = '▶';
+  }, END_DURATION);
+}
+
+// ========== PROGRESS ==========
+function updateProgress(index) {
+  const totalDuration = SHOTS.reduce((s, shot) => s + shot.duration, 0);
+  const elapsed = SHOTS.slice(0, index).reduce((s, shot) => s + shot.duration, 0);
+  progressBar.style.width = `${(elapsed / totalDuration) * 100}%`;
+
+  // Animate to next position
+  schedule(() => {
+    const nextElapsed = SHOTS.slice(0, index + 1).reduce((s, shot) => s + shot.duration, 0);
+    progressBar.style.width = `${(nextElapsed / totalDuration) * 100}%`;
+  }, SHOTS[index].duration - 300);
+}
+
+// ========== CONTROLS ==========
+btnPlay.addEventListener('click', () => {
+  if (!isPlaying && currentShot === -1) {
+    // Start fresh
+    resetPlayer();
+    startSlideshow();
+    return;
+  }
+  if (bgm && bgm.paused) {
+    bgm.play();
+    bgmBars.classList.remove('paused');
+    btnPlay.textContent = '⏸';
+  } else {
+    bgm.pause();
+    bgmBars.classList.add('paused');
+    btnPlay.textContent = '▶';
+  }
+});
+
+document.getElementById('btnReplay').addEventListener('click', () => {
+  resetPlayer();
+  showTitle();
+});
+
+function resetPlayer() {
+  clearAllTimeouts();
+  if (bgm) { bgm.pause(); bgm.currentTime = 0; bgm.volume = 0; }
+  bgmBars.classList.add('paused');
+  isPlaying = false;
+  currentShot = -1;
+  subtitleEl.className = 'subtitle';
+  titleCard.classList.remove('visible');
+  endCard.classList.remove('visible');
+  progressBar.style.width = '0%';
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active', 'kenburns-in', 'kenburns-out'));
+  shotCounter.textContent = '';
+}
+
+// ========== UTILS ==========
+function schedule(fn, delay) {
+  const id = setTimeout(fn, delay);
+  timeoutIds.push(id);
+  return id;
+}
+
+function clearAllTimeouts() {
+  timeoutIds.forEach(clearTimeout);
+  timeoutIds = [];
+}
+
+// ========== KEYBOARD ==========
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    btnPlay.click();
+  } else if (e.code === 'KeyR') {
+    document.getElementById('btnReplay').click();
+  }
+});
+
+const startOverlay = document.getElementById('startOverlay');
+
+// ========== START ==========
+startOverlay.addEventListener('click', () => {
+  startOverlay.classList.add('hidden');
+  // Create audio on user gesture (required by browser autoplay policy)
+  bgm = new Audio('assets/bgm.mp3');
+  bgm.loop = true;
+  bgm.volume = 0;
+  bgm.preload = 'auto';
+  showTitle();
+});
+
+init();
+</script>
+</body>
+</html>

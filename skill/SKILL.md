@@ -147,51 +147,85 @@ sessions_spawn({
 
 ## 执行流程
 
-### 1. 初始化
+### 0. 前置检查
 
 ```bash
 cd ~/.openclaw/workspace/skills/kais-aigc-movie
 npm install && npm run build
 ```
 
-### 2. 生成剧集
+### 1. 完整流水线（pipeline.mjs）
+
+**一键执行脚本**，支持断点续传和跳步：
+
+```bash
+# 完整流程（需要先完成 Writer 步骤生成 script.json）
+node pipeline.mjs --topic "一个程序员的一天" --shots 8 --duration 50 --voice male-narrator
+
+# 跳过视频生成（仅测试语音+剪辑）
+node pipeline.mjs --resume ./episodes/ep_20260407_xxx --skip-video
+
+# 断点续传
+node pipeline.mjs --resume ./episodes/ep_20260407_xxx
+
+# 仅 Dry-run（只生成 Writer prompt，不执行后续步骤）
+node pipeline.mjs --topic "主题" --dry-run
+```
+
+**脚本输出**：
+- `episodes/{id}/writer-prompt.txt` — Writer sub-agent 的完整 prompt
+- `episodes/{id}/script.json` — Writer 输出的剧本（需 agent 生成）
+- `episodes/{id}/story_bible.json` — 故事设定
+- `episodes/{id}/shots.json` — 分镜表
+- `episodes/{id}/audio/*.wav` — 语音文件
+- `episodes/{id}/shots/*.mp4` — 视频片段
+- `episodes/{id}/rough_cut.mp4` — 粗成片
+- `episodes/{id}/qc_report.json` — 质检报告
+- `episodes/{id}/summary.json` — 机器可读的执行摘要
+
+### 2. Agent 编排步骤
 
 当用户触发时，按以下步骤执行：
 
 #### Step 1: 剧本生成（Writer）
-- 使用 `sessions_spawn` 调用 GLM-5.1 sub-agent
-- Prompt 见 `prompts/writer-prompt.md`
-- 输出：`story_bible.json` + `shots.json`
-- 保存到 `episodes/{id}/`
+- 运行 `node pipeline.mjs --topic "主题" --dry-run` 生成 writer prompt
+- 使用 `sessions_spawn` 调用 GLM-5.1 sub-agent，让它读取 `writer-prompt.txt` 并将生成的 JSON 写入 `script.json`
+- **关键**：sub-agent 必须将完整的 JSON 输出写入 `script.json`，不添加额外文字
+- 生成完成后，运行 `node pipeline.mjs --resume <episodeDir>` 继续后续步骤
 
-#### Step 2: 语音合成（Voice Director）— 与 Step 3 并行
-- 读取 `shots.json` 中的 subtitle 字段
-- 调用 GLM-TTS API 批量合成
-- 支持音色：`tongtong`, `male-narrator`, `female-shuangkuaisisi` 等（见 `listVoices()`）
-- 保存到 `episodes/{id}/audio/`
+#### Step 2-3: 语音 + 视频（pipeline.mjs 自动处理）
+- pipeline.mjs 自动根据 `VIDEO_BACKEND` 选择 ComfyUI 或 Kling
+- 自动跳过已存在的文件（支持断点续传）
+- 语音合成：GLM-TTS，支持 10 种音色
+- 视频生成：ComfyUI (Wan2.2) 或 Kling 3.0
 
-#### Step 3: 视频生成（Video Renderer）— 与 Step 2 并行
-- 读取 `shots.json` 中的 visualPrompt 字段
-- 根据 `VIDEO_BACKEND` 选择 ComfyUI 或 Kling 后端
-- 调用 `createVideoGenerator()` 获取统一接口
-- ComfyUI: 本地 GPU 异步生成，内置 Wan2.2 T2V 工作流
-- Kling: 云端 API 异步生成，并发控制 + 重试
-- 保存到 `episodes/{id}/shots/`
+#### Step 4: 后期剪辑（pipeline.mjs 自动处理）
+- 自动生成 SRT 字幕文件
+- FFmpeg 拼接 + 转场 + 字幕烧录
+- 优先使用 `addTransition`（fade 转场），失败则 fallback 到简单拼接
 
-#### Step 4: 后期剪辑（Editor）
-- 等待 Step 2 + Step 3 全部完成
-- FFmpeg 拼接：每个镜头叠加音频 → 添加字幕 → 添加转场
-- 转场偏移量根据 ffprobe 获取的实际视频时长动态计算
-- 输出：`episodes/{id}/rough_cut.mp4`
-
-#### Step 5: 质量检测（QC）
-- 使用 ffprobe 检查成片
-- 验证：时长、编码、分辨率、音视频完整性
-- 输出：`episodes/{id}/qc_report.json`
+#### Step 5: 质量检测（pipeline.mjs 自动处理）
+- ffprobe 检查时长、编码、分辨率
+- 输出结构化 qc_report.json
 
 #### Step 6: 交付
+- 读取 `summary.json` 获取结果路径
 - 发送 `rough_cut.mp4` 给用户
 - 附上质检摘要
+
+### 3. 环境变量检查
+
+执行前确认：
+```bash
+# 检查 ffmpeg
+ffmpeg -version
+
+# 检查 GLM-TTS API Key
+echo $GLM_TTS_API_KEY
+
+# 检查视频后端
+echo $VIDEO_BACKEND  # comfyui 或 kling
+```
 
 ### 3. 状态管理
 

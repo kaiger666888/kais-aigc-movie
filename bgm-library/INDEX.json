@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-04-07",
+  "description": "Free royalty-free BGM library for kais-aigc-movie pipeline",
+  "license_notice": "Bensound tracks require attribution (CC-BY). See https://www.bensound.com/licensing for details. NCS tracks are free for YouTube/Twitch with attribution.",
+  "categories": {
+    "ambient": {
+      "description": "Calm, atmospheric backgrounds for reflective scenes",
+      "tags": ["calm", "peaceful", "nature", "slow", "meditative"],
+      "tracks": [
+        {"file": "bensound_aftermath.mp3", "title": "Aftermath", "artist": "Bensound", "duration_s": 157, "license": "CC-BY", "mood": "melancholic calm"},
+        {"file": "bensound_arboretum.mp3", "title": "Arboretum", "artist": "Bensound", "duration_s": 225, "license": "CC-BY", "mood": "peaceful nature"},
+        {"file": "bensound_far.mp3", "title": "Far", "artist": "Bensound", "duration_s": 116, "license": "CC-BY", "mood": "distant calm"},
+        {"file": "bensound_lastlight.mp3", "title": "Last Light", "artist": "Bensound", "duration_s": 310, "license": "CC-BY", "mood": "twilight serene"},
+        {"file": "bensound_near.mp3", "title": "Near", "artist": "Bensound", "duration_s": 154, "license": "CC-BY", "mood": "intimate gentle"},
+        {"file": "bensound_north.mp3", "title": "North", "artist": "Bensound", "duration_s": 128, "license": "CC-BY", "mood": "cold atmospheric"},
+        {"file": "bensound_wyldwoodmist.mp3", "title": "Wyldwood Mist", "artist": "Bensound", "duration_s": 212, "license": "CC-BY", "mood": "mysterious forest"}
+      ]
+    },
+    "cinematic": {
+      "description": "Epic, grand backgrounds for dramatic scenes and trailers",
+      "tags": ["epic", "grand", "dramatic", "trailer", "powerful"],
+      "tracks": [
+        {"file": "bensound_fantasyopening.mp3", "title": "Fantasy Opening", "artist": "Bensound", "duration_s": 44, "license": "CC-BY", "mood": "epic intro"},
+        {"file": "bensound_firstcontact.mp3", "title": "First Contact", "artist": "Bensound", "duration_s": 241, "license": "CC-BY", "mood": "sci-fi wonder"},
+        {"file": "bensound_landmark.mp3", "title": "Landmark", "artist": "Bensound", "duration_s": 170, "license": "CC-BY", "mood": "triumphant"},
+        {"file": "bensound_opening.mp3", "title": "Opening", "artist": "Bensound", "duration_s": 63, "license": "CC-BY", "mood": "grand reveal"},
+        {"file": "bensound_prism.mp3", "title": "Prism", "artist": "Bensound", "duration_s": 211, "license": "CC-BY", "mood": "expansive"},
+        {"file": "bensound_stellarcatharsis.mp3", "title": "Stellar Catharsis", "artist": "Bensound", "duration_s": 195, "license": "CC-BY", "mood": "cosmic emotional"},
+        {"file": "bensound_tourdeforce.mp3", "title": "Tour de Force", "artist": "Bensound", "duration_s": 123, "license": "CC-BY", "mood": "powerful dynamic"},
+        {"file": "bensound_ventris.mp3", "title": "Ventris", "artist": "Bensound", "duration_s": 148, "license": "CC-BY", "mood": "mysterious journey"}
+      ]
+    },
+    "emotional": {
+      "description": "Touching, sentimental backgrounds for heartfelt scenes",
+      "tags": ["sad", "touching", "sentimental", "tender", "hopeful"],
+      "tracks": [
+        {"file": "bensound_akindheart.mp3", "title": "A Kind Heart", "artist": "Bensound", "duration_s": 170, "license": "CC-BY", "mood": "gentle warmth"},
+        {"file": "bensound_alivethroughmemories.mp3", "title": "Alive Through Memories", "artist": "Bensound", "duration_s": 241, "license": "CC-BY", "mood": "nostalgic tender"},
+        {"file": "bensound_echoofsadness.mp3", "title": "Echo of Sadness", "artist": "Bensound", "duration_s": 139, "license": "CC-BY", "mood": "melancholic"},
+        {"file": "bensound_eclipseoftears.mp3", "title": "Eclipse of Tears", "artist": "Bensound", "duration_s": 169, "license": "CC-BY", "mood": "sorrowful"},
+        {"file": "bensound_hope.mp3", "title": "Hope", "artist": "Bensound", "duration_s": 112, "license": "CC-BY", "mood": "uplifting gentle"},
+        {"file": "bensound_light.mp3", "title": "Light", "artist": "Bensound", "duration_s": 224, "license": "CC-BY", "mood": "inspiring warm"},
+        {"file": "bensound_raindrops.mp3", "title": "Raindrops", "artist": "Bensound", "duration_s": 75, "license": "CC-BY", "mood": "soft reflective"}
+      ]
+    },
+    "suspense": {
+      "description": "Tense, dark backgrounds for thriller and mystery scenes",
+      "tags": ["dark", "tense", "mystery", "thriller", "ominous"],
+      "tracks": [
+        {"file": "bensound_edgeofunknown.mp3", "title": "Edge of Unknown", "artist": "Bensound", "duration_s": 206, "license": "CC-BY", "mood": "eerie tension"},
+        {"file": "bensound_exile.mp3", "title": "Exile", "artist": "Bensound", "duration_s": 207, "license": "CC-BY", "mood": "dark oppressive"},
+        {"file": "bensound_forsaken.mp3", "title": "Forsaken", "artist": "Bensound", "duration_s": 180, "license": "CC-BY", "mood": "abandoned desolate"},
+        {"file": "bensound_obscura.mp3", "title": "Obscura", "artist": "Bensound", "duration_s": 336, "license": "CC-BY", "mood": "deep mysterious"},
+        {"file": "bensound_sleepless.mp3", "title": "Sleepless", "artist": "Bensound", "duration_s": 153, "license": "CC-BY", "mood": "restless anxiety"}
+      ]
+    },
+    "upbeat": {
+      "description": "Positive, energetic backgrounds for happy and action scenes",
+      "tags": ["happy", "energetic", "positive", "fun", "dynamic"],
+      "tracks": [
+        {"file": "bensound_hopefulness.mp3", "title": "Hopefulness", "artist": "Bensound", "duration_s": 187, "license": "CC-BY", "mood": "optimistic bright"},
+        {"file": "bensound_intersect.mp3", "title": "Intersect", "artist": "Bensound", "duration_s": 158, "license": "CC-BY", "mood": "modern dynamic"},
+        {"file": "bensound_wakeup.mp3", "title": "Wake Up", "artist": "Bensound", "duration_s": 247, "license": "CC-BY", "mood": "energetic fresh"},
+        {"file": "favela_ncs.mp3", "title": "FAVELA", "artist": "NCS", "duration_s": 138, "license": "NCS", "mood": "electronic upbeat"}
+      ]
+    }
+  },
+  "usage": {
+    "auto_select": "The pipeline can auto-select BGM based on scene mood by matching tags in story_bible.bgmStyle against category tags.",
+    "attribution": "Bensound tracks: Music by Bensound.com (CC-BY). NCS tracks: NCS Release, free for YouTube/Twitch with attribution."
+  }
+}

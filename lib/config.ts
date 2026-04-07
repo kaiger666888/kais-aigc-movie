@@ -10,7 +10,7 @@ const ConfigSchema = z.object({
   /** GLM-TTS configuration */
   glm: z.object({
     /** GLM-TTS API key (Bearer token) */
-    ttsApiKey: z.string().min(1, "GLM_TTS_API_KEY is required"),
+    ttsApiKey: z.string().default(""),
     /** GLM-TTS endpoint */
     ttsEndpoint: z.string().default("https://open.bigmodel.cn/api/paas/v4/audio/speech"),
   }),
@@ -28,6 +28,44 @@ const ConfigSchema = z.object({
     maxRetries: z.number().int().min(1).max(5).default(3),
     /** Per-shot timeout in ms */
     shotTimeoutMs: z.number().default(300_000),
+  }),
+  /** Jimeng (即梦) image generation configuration */
+  jimeng: z.object({
+    /** Jimeng API base URL */
+    apiUrl: z.string().default("http://localhost:8000"),
+    /** Jimeng session ID (Bearer token) */
+    sessionId: z.string().default(""),
+    /** Default model */
+    model: z.string().default("jimeng-5.0"),
+    /** Default aspect ratio */
+    ratio: z.string().default("9:16"),
+    /** Default resolution */
+    resolution: z.string().default("2k"),
+    /** Base delay between requests in ms (anti-rate-limit) */
+    baseDelayMs: z.number().default(8000),
+    /** Jitter range in ms */
+    jitterRangeMs: z.number().default(12000),
+    /** Max concurrent requests */
+    maxConcurrent: z.number().int().min(1).max(5).default(3),
+    /** Max retries per request */
+    maxRetries: z.number().int().min(1).max(5).default(2),
+    /** Request timeout in ms */
+    requestTimeoutMs: z.number().default(120_000),
+    /** 429 backoff base in ms */
+    backoffBaseMs: z.number().default(60_000),
+    /** 429 backoff jitter in ms */
+    backoffJitterMs: z.number().default(30_000),
+  }),
+  /** Seedance video generation configuration */
+  seedance: z.object({
+    /** Seedance API base URL */
+    apiUrl: z.string().default(""),
+    /** Seedance API key */
+    apiKey: z.string().default(""),
+    /** Default aspect ratio for video */
+    ratio: z.string().default("4:3"),
+    /** Default duration per shot in seconds */
+    duration: z.number().default(5),
   }),
   /** ComfyUI configuration */
   comfyui: z.object({
@@ -72,6 +110,26 @@ export function loadConfig(): Config {
       ttsApiKey: process.env.GLM_TTS_API_KEY ?? "",
       ttsEndpoint: process.env.GLM_TTS_ENDPOINT,
     },
+    jimeng: {
+      apiUrl: process.env.JIMENG_API_URL ?? "http://localhost:8000",
+      sessionId: process.env.JIMENG_SESSION_ID ?? "",
+      model: process.env.JIMENG_MODEL ?? "jimeng-5.0",
+      ratio: process.env.JIMENG_RATIO ?? "9:16",
+      resolution: process.env.JIMENG_RESOLUTION ?? "2k",
+      baseDelayMs: parseInt(process.env.JIMENG_BASE_DELAY_MS ?? "8000", 10),
+      jitterRangeMs: parseInt(process.env.JIMENG_JITTER_RANGE_MS ?? "12000", 10),
+      maxConcurrent: parseInt(process.env.JIMENG_MAX_CONCURRENT ?? "3", 10),
+      maxRetries: parseInt(process.env.JIMENG_MAX_RETRIES ?? "2", 10),
+      requestTimeoutMs: parseInt(process.env.JIMENG_REQUEST_TIMEOUT_MS ?? "120000", 10),
+      backoffBaseMs: parseInt(process.env.JIMENG_BACKOFF_BASE_MS ?? "60000", 10),
+      backoffJitterMs: parseInt(process.env.JIMENG_BACKOFF_JITTER_MS ?? "30000", 10),
+    },
+    seedance: {
+      apiUrl: process.env.SEEDANCE_API_URL ?? "",
+      apiKey: process.env.SEEDANCE_API_KEY ?? "",
+      ratio: process.env.SEEDANCE_RATIO ?? "4:3",
+      duration: parseInt(process.env.SEEDANCE_DURATION ?? "5", 10),
+    },
     kling: {
       accessKey: process.env.KLING_ACCESS_KEY ?? "",
       secretKey: process.env.KLING_SECRET_KEY ?? "",
@@ -110,6 +168,22 @@ export function getConfig(): Config {
     });
   }
   return _config;
+}
+
+/**
+ * Create a JimengService pre-configured from the global Config.
+ */
+export async function createJimengService(): Promise<import("./services/jimeng-service.js").JimengService> {
+  const { JimengService } = await import("./services/jimeng-service.js");
+  return JimengService.fromConfig(getConfig());
+}
+
+/**
+ * Create a SeedanceService pre-configured from the global Config.
+ */
+export async function createSeedanceService(): Promise<import("./services/seedance-service.js").SeedanceService> {
+  const { SeedanceService } = await import("./services/seedance-service.js");
+  return SeedanceService.fromConfig(getConfig());
 }
 
 /**

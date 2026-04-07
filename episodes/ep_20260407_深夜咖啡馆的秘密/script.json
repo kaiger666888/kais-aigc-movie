@@ -1,0 +1,136 @@
+{
+  "storyBible": {
+    "title": "深夜咖啡馆的秘密",
+    "theme": "孤独与温暖",
+    "genre": "都市治愈",
+    "style": "comic",
+    "ratio": "9:16",
+    "characters": [
+      {
+        "id": "c1",
+        "name": "小夏",
+        "description": "25岁女生，黑色齐肩短发，穿着米白色高领毛衣搭配深蓝色长裙，戴银色细框眼镜，眼神温柔略带忧郁，手指纤细",
+        "characterProfile": "25岁女生，黑色齐肩短发，米白色高领毛衣，深蓝色长裙，银色细框眼镜",
+        "voiceConfig": { "voice": "female-gentle", "speed": 0.9 }
+      },
+      {
+        "id": "c2",
+        "name": "老陈",
+        "description": "55岁男性，灰白短发整齐向后梳，穿着深棕色马甲内搭白色衬衫，围着深绿色围裙，面容慈祥，眼角有皱纹",
+        "characterProfile": "55岁男性，灰白短发，深棕色马甲，白色衬衫，深绿色围裙，慈祥面容",
+        "voiceConfig": { "voice": "male-warm", "speed": 0.85 }
+      }
+    ],
+    "scenes": [
+      {
+        "id": "s1",
+        "location": "深夜咖啡馆「角落时光」",
+        "description": "老式咖啡馆，木质吧台，暖黄色吊灯，墙上挂满顾客留下的明信片，窗外是细雨中的小路",
+        "mood": "温暖安静",
+        "timeOfDay": "night",
+        "musicStyle": { "mood": "warm", "genre": "piano", "bpm": "60-70" }
+      }
+    ],
+    "synopsis": "深夜，小夏独自来到一家即将关门的老式咖啡馆。老板老陈默默为她做了一杯热可可，留下一张纸条：「姑娘，再难的路也有人等你。」小夏读后红了眼眶，窗外的雨停了。",
+    "duration": 45,
+    "musicStyle": { "mood": "warm", "genre": "piano", "bpm": "65" }
+  },
+  "shots": [
+    {
+      "id": "shot_1",
+      "sceneId": "s1",
+      "duration": 7,
+      "visualPrompt": "Wide shot of a cozy vintage cafe at night, warm yellow pendant lights, wooden counter, rain visible through foggy windows, a young woman with black bob hair entering alone",
+      "imagePrompt": "深夜咖啡馆的全景，暖黄色吊灯柔和照明，木质吧台古朴温润，墙上贴满彩色明信片，窗外细雨朦胧灯光映在湿漉漉的石板路上，漫画风，暖色调，9:16竖屏构图",
+      "lastFramePrompt": "深夜咖啡馆全景，暖黄色吊灯下一位穿米白色高领毛衣的女生站在门口，手推着木门，雨水从她伞上滴落，漫画风，暖色调，9:16竖屏构图",
+      "videoPrompt": "@1 @2 雨滴缓缓滑落窗玻璃，木门被轻轻推开，暖黄灯光从门缝透出照亮雨夜，保持构图和色彩一致，镜头缓慢拉远，温暖漫画质感，avoid jitter and bent limbs",
+      "subtitle": "城市的深夜，总有一盏灯为你亮着。",
+      "speaker": "narrator",
+      "cameraAngle": "wide",
+      "transition": "fade",
+      "emotion": "neutral",
+      "pace": "slow",
+      "sceneGroupId": "scene_1"
+    },
+    {
+      "id": "shot_2",
+      "sceneId": "s1",
+      "duration": 6,
+      "visualPrompt": "Medium shot, young woman sitting alone at a corner table, hands wrapped around a warm cup, steam rising, expression melancholic, cafe interior warm lighting",
+      "imagePrompt": "咖啡馆角落座位的中景，穿米白色高领毛衣的小夏独自坐着，双手捧着一杯热气腾腾的可可，表情略带忧郁望着窗外，暖黄灯光打在她侧脸上，漫画风，柔和光线，9:16竖屏构图",
+      "lastFramePrompt": "咖啡馆角落座位的中景，小夏低头看着手中可可杯，热气升腾模糊了她的眼镜片，银色细框眼镜上蒙着薄雾，漫画风，柔和光线，9:16竖屏构图",
+      "videoPrompt": "@1 @2 热气从杯中缓缓升起，小夏轻轻叹气肩膀微沉，眼镜片上凝结出薄雾，保持构图和色彩一致，镜头缓慢推进，温暖漫画质感，avoid jitter and bent limbs",
+      "subtitle": "小夏已经很久没有好好坐下来了。",
+      "speaker": "narrator",
+      "cameraAngle": "medium",
+      "transition": "fade",
+      "emotion": "sad",
+      "pace": "slow",
+      "sceneGroupId": "scene_1"
+    },
+    {
+      "id": "shot_3",
+      "sceneId": "s1",
+      "duration": 7,
+      "visualPrompt": "Medium shot from behind the counter, elderly cafe owner in brown vest and green apron preparing a drink, warm focused expression, steam and soft lighting",
+      "imagePrompt": "吧台后面的中景，穿深棕色马甲白色衬衫系深绿色围裙的老陈站在咖啡机前，正在制作一杯热可可，面容慈祥专注，暖黄灯光映照他灰白短发，漫画风，暖色调，9:16竖屏构图",
+      "lastFramePrompt": "吧台后面的中景，老陈将一杯热可可放在木质托盘上，嘴角带着温和的微笑，手上放着一张小纸条，暖黄灯光柔和，漫画风，暖色调，9:16竖屏构图",
+      "videoPrompt": "@1 @2 老陈缓缓搅拌可可，牛奶融入巧克力的漩涡，他取过一张纸条放在托盘上，保持构图和色彩一致，镜头缓慢推进，温暖漫画质感，avoid jitter and bent limbs",
+      "subtitle": "老陈没有多问，只是默默做了一杯热可可。",
+      "speaker": "narrator",
+      "cameraAngle": "medium",
+      "transition": "cut",
+      "emotion": "warm",
+      "pace": "normal",
+      "sceneGroupId": "scene_1"
+    },
+    {
+      "id": "shot_4",
+      "sceneId": "s1",
+      "duration": 6,
+      "visualPrompt": "Close-up shot, elderly hands placing a cup of hot cocoa and a small folded note on a wooden table, warm soft focus background",
+      "imagePrompt": "特写，一双布满皱纹的慈祥老手将一杯热可可和一张折叠的小纸条轻轻放在深色木桌上，背景是咖啡馆的暖黄灯光虚化，漫画风，浅景深，9:16竖屏构图",
+      "lastFramePrompt": "特写，木桌上放着一杯冒着热气的可可和一张展开的纸条，纸条上隐约可见手写字迹，背景暖黄灯光，漫画风，浅景深，9:16竖屏构图",
+      "videoPrompt": "@1 @2 老陈的手缓缓将杯子和纸条推到桌子中央，热气袅袅上升，纸条微微展开，保持构图和色彩一致，镜头固定微距，温暖漫画质感，avoid jitter and bent limbs",
+      "subtitle": "杯子下面压着一张纸条。",
+      "speaker": "narrator",
+      "cameraAngle": "close-up",
+      "transition": "fade",
+      "emotion": "warm",
+      "pace": "slow",
+      "sceneGroupId": "scene_1"
+    },
+    {
+      "id": "shot_5",
+      "sceneId": "s1",
+      "duration": 7,
+      "visualPrompt": "Close-up of young woman's face reading a note, eyes becoming teary, warm cafe lighting reflecting in her glasses, emotional moment",
+      "imagePrompt": "特写，小夏低头阅读纸条，银色细框眼镜映着暖黄灯光，嘴角微微颤抖，眼眶泛红但没有落泪，表情从忧郁转为感动，漫画风，柔光，9:16竖屏构图",
+      "lastFramePrompt": "特写，小夏抬起头，眼眶含泪但嘴角带着一丝微笑，眼镜上映着窗外透进来的微光，表情释然温暖，漫画风，柔光，9:16竖屏构图",
+      "videoPrompt": "@1 @2 小夏的眼眶逐渐泛红，泪水在眼中打转但嘴角缓缓上扬，眼镜片上映出暖光微微闪烁，保持构图和色彩一致，镜头缓慢推进，温暖漫画质感，avoid jitter and bent limbs",
+      "subtitle": "「姑娘，再难的路，也有人等你。」",
+      "speaker": "narrator",
+      "cameraAngle": "extreme-close-up",
+      "transition": "fade",
+      "emotion": "warm",
+      "pace": "slow",
+      "sceneGroupId": "scene_1"
+    },
+    {
+      "id": "shot_6",
+      "sceneId": "s1",
+      "duration": 7,
+      "visualPrompt": "Wide shot from outside looking in through rain-streaked window, young woman smiling inside warm cafe, rain stopping outside, warm light contrasting with cool blue night",
+      "imagePrompt": "从咖啡馆外面看进去的广角镜头，雨滴挂在玻璃窗上，窗内暖黄灯光中小夏微笑着端起可可，窗外是深蓝色雨夜，漫画风，冷暖对比色调，9:16竖屏构图",
+      "lastFramePrompt": "从咖啡馆外面看的广角镜头，雨停了，窗玻璃上的雨滴正在滑落，窗外露出淡淡的月光，窗内小夏已经不在座位上，桌上留着空杯和纸条，漫画风，冷暖对比色调，9:16竖屏构图",
+      "videoPrompt": "@1 @2 窗外雨滴逐渐变稀疏，一缕月光透过云层照在湿漉漉的石板路上，窗内小夏微微举杯，保持构图和色彩一致，镜头缓慢拉远，温暖漫画质感，avoid jitter and bent limbs",
+      "subtitle": "雨停了，明天会更好的。",
+      "speaker": "narrator",
+      "cameraAngle": "wide",
+      "transition": "fade",
+      "emotion": "warm",
+      "pace": "slow",
+      "sceneGroupId": "scene_1"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "shotId": "shot_1",
+    "prompt": "@1 @2 雨滴缓缓滑落窗玻璃，木门被轻轻推开，暖黄灯光从门缝透出照亮雨夜，保持构图和色彩一致，镜头缓慢拉远，温暖漫画质感，avoid jitter and bent limbs",
+    "firstFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_1_first.png",
+    "lastFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_1_last.png",
+    "ambienceSegmentPath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/ambience_scene_1_shot_1.wav",
+    "ratio": "4:3",
+    "duration": 7,
+    "status": "pending"
+  },
+  {
+    "shotId": "shot_2",
+    "prompt": "@1 @2 热气从杯中缓缓升起，小夏轻轻叹气肩膀微沉，眼镜片上凝结出薄雾，保持构图和色彩一致，镜头缓慢推进，温暖漫画质感，avoid jitter and bent limbs",
+    "firstFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_2_first.png",
+    "lastFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_2_last.png",
+    "ambienceSegmentPath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/ambience_scene_1_shot_2.wav",
+    "ratio": "4:3",
+    "duration": 6,
+    "status": "pending"
+  },
+  {
+    "shotId": "shot_3",
+    "prompt": "@1 @2 老陈缓缓搅拌可可，牛奶融入巧克力的漩涡，他取过一张纸条放在托盘上，保持构图和色彩一致，镜头缓慢推进，温暖漫画质感，avoid jitter and bent limbs",
+    "firstFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_3_first.png",
+    "lastFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_3_last.png",
+    "ambienceSegmentPath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/ambience_scene_1_shot_3.wav",
+    "ratio": "4:3",
+    "duration": 7,
+    "status": "pending"
+  },
+  {
+    "shotId": "shot_4",
+    "prompt": "@1 @2 老陈的手缓缓将杯子和纸条推到桌子中央，热气袅袅上升，纸条微微展开，保持构图和色彩一致，镜头固定微距，温暖漫画质感，avoid jitter and bent limbs",
+    "firstFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_4_first.png",
+    "lastFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_4_last.png",
+    "ambienceSegmentPath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/ambience_scene_1_shot_4.wav",
+    "ratio": "4:3",
+    "duration": 6,
+    "status": "pending"
+  },
+  {
+    "shotId": "shot_5",
+    "prompt": "@1 @2 小夏的眼眶逐渐泛红，泪水在眼中打转但嘴角缓缓上扬，眼镜片上映出暖光微微闪烁，保持构图和色彩一致，镜头缓慢推进，温暖漫画质感，avoid jitter and bent limbs",
+    "firstFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_5_first.png",
+    "lastFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_5_last.png",
+    "ambienceSegmentPath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/ambience_scene_1_shot_5.wav",
+    "ratio": "4:3",
+    "duration": 7,
+    "status": "pending"
+  },
+  {
+    "shotId": "shot_6",
+    "prompt": "@1 @2 窗外雨滴逐渐变稀疏，一缕月光透过云层照在湿漉漉的石板路上，窗内小夏微微举杯，保持构图和色彩一致，镜头缓慢拉远，温暖漫画质感，avoid jitter and bent limbs",
+    "firstFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_6_first.png",
+    "lastFramePath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/shot_6_last.png",
+    "ambienceSegmentPath": "episodes/ep_20260407_深夜咖啡馆的秘密/images/ambience_scene_1_shot_6.wav",
+    "ratio": "4:3",
+    "duration": 7,
+    "status": "pending"
+  }
+]

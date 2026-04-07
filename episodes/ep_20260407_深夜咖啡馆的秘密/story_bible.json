@@ -1,0 +1,50 @@
+{
+  "title": "深夜咖啡馆的秘密",
+  "theme": "孤独与温暖",
+  "genre": "都市治愈",
+  "style": "comic",
+  "ratio": "9:16",
+  "characters": [
+    {
+      "id": "c1",
+      "name": "小夏",
+      "description": "25岁女生，黑色齐肩短发，穿着米白色高领毛衣搭配深蓝色长裙，戴银色细框眼镜，眼神温柔略带忧郁，手指纤细",
+      "characterProfile": "25岁女生，黑色齐肩短发，米白色高领毛衣，深蓝色长裙，银色细框眼镜",
+      "voiceConfig": {
+        "voice": "female-gentle",
+        "speed": 0.9
+      }
+    },
+    {
+      "id": "c2",
+      "name": "老陈",
+      "description": "55岁男性，灰白短发整齐向后梳，穿着深棕色马甲内搭白色衬衫，围着深绿色围裙，面容慈祥，眼角有皱纹",
+      "characterProfile": "55岁男性，灰白短发，深棕色马甲，白色衬衫，深绿色围裙，慈祥面容",
+      "voiceConfig": {
+        "voice": "male-warm",
+        "speed": 0.85
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "location": "深夜咖啡馆「角落时光」",
+      "description": "老式咖啡馆，木质吧台，暖黄色吊灯，墙上挂满顾客留下的明信片，窗外是细雨中的小路",
+      "mood": "温暖安静",
+      "timeOfDay": "night",
+      "musicStyle": {
+        "mood": "warm",
+        "genre": "piano",
+        "bpm": "60-70"
+      }
+    }
+  ],
+  "synopsis": "深夜，小夏独自来到一家即将关门的老式咖啡馆。老板老陈默默为她做了一杯热可可，留下一张纸条：「姑娘，再难的路也有人等你。」小夏读后红了眼眶，窗外的雨停了。",
+  "duration": 45,
+  "musicStyle": {
+    "mood": "warm",
+    "genre": "piano",
+    "bpm": "65"
+  }
+}
