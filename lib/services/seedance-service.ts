@@ -80,19 +80,22 @@ export class SeedanceService {
 
   /**
    * Prepare video generation tasks from shots.
+   * Only dynamic shots get video tasks; static/lipSync are skipped.
    * Called during Phase A to generate video_tasks.json.
    */
   prepareVideoTasks(shots: Shot[], imagesDir: string): VideoTask[] {
-    return shots.map((shot) => ({
-      shotId: shot.id,
-      prompt: shot.videoPrompt ?? `@1 @2 画面缓缓过渡，保持构图和色彩一致，avoid jitter and bent limbs`,
-      firstFramePath: shot.imageUrl ? shot.imageUrl : join(imagesDir, `${shot.id}_first.png`),
-      lastFramePath: shot.lastFrameUrl ? shot.lastFrameUrl : join(imagesDir, `${shot.id}_last.png`),
-      ambienceSegmentPath: join(imagesDir, `ambience_${shot.sceneGroupId ?? "default"}_${shot.id}.wav`),
-      ratio: this.defaultRatio,
-      duration: shot.duration ?? this.defaultDuration,
-      status: "pending" as const,
-    }));
+    return shots
+      .filter((shot) => (shot.shotType ?? "dynamic") === "dynamic")
+      .map((shot) => ({
+        shotId: shot.id,
+        prompt: shot.videoPrompt ?? `@1 @2 画面缓缓过渡，保持构图和色彩一致，avoid jitter and bent limbs`,
+        firstFramePath: shot.imageUrl ? shot.imageUrl : join(imagesDir, `${shot.id}_first.png`),
+        lastFramePath: shot.lastFrameUrl ? shot.lastFrameUrl : join(imagesDir, `${shot.id}_last.png`),
+        ambienceSegmentPath: join(imagesDir, `ambience_${shot.sceneGroupId ?? "default"}_${shot.id}.wav`),
+        ratio: this.defaultRatio,
+        duration: shot.duration ?? this.defaultDuration,
+        status: "pending" as const,
+      }));
   }
 
   /**

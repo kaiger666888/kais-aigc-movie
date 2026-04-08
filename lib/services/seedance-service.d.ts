@@ -57,6 +57,7 @@ export declare class SeedanceService {
     }): SeedanceService;
     /**
      * Prepare video generation tasks from shots.
+     * Only dynamic shots get video tasks; static/lipSync are skipped.
      * Called during Phase A to generate video_tasks.json.
      */
     prepareVideoTasks(shots: Shot[], imagesDir: string): VideoTask[];

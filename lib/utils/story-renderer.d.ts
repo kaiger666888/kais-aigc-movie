@@ -11,6 +11,7 @@ export interface StoryRenderOptions {
     storyBible: Record<string, unknown>;
     shots: Array<{
         id: string;
+        shotType?: "dynamic" | "static" | "lipSync";
         imageUrl: string;
         lastFrameUrl?: string;
         subtitle: string;

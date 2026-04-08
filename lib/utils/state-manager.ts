@@ -45,6 +45,7 @@ export class EpisodeStateManager {
       updatedAt: now,
       retryCount: 0,
       errors: [],
+      audioPaths: {},
       options,
     };
 

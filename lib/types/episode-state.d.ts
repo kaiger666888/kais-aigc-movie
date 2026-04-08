@@ -32,6 +32,8 @@ export declare const EpisodeStateSchema: z.ZodObject<{
         style?: string | undefined;
         characterCount?: number | undefined;
     }>>;
+    /** Per-shot audio paths (for static/lipSync shots using TTS + Ken Burns) */
+    audioPaths: z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
     status: "failed" | "done" | "created" | "writing" | "voice_rendering" | "editing" | "qc";
     id: string;
@@ -42,6 +44,7 @@ export declare const EpisodeStateSchema: z.ZodObject<{
     createdAt: string;
     updatedAt: string;
     errors: string[];
+    audioPaths: Record<string, string>;
     options?: {
         duration?: number | undefined;
         style?: string | undefined;
@@ -62,6 +65,7 @@ export declare const EpisodeStateSchema: z.ZodObject<{
     retryCount?: number | undefined;
     progress?: number | undefined;
     errors?: string[] | undefined;
+    audioPaths?: Record<string, string> | undefined;
 }>;
 export type EpisodeStatus = z.infer<typeof EpisodeStatusEnum>;
 export type EpisodeStep = z.infer<typeof EpisodeStepEnum>;

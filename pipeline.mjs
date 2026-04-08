@@ -385,17 +385,24 @@ async function phaseA(args) {
     }
   }
 
-  // ── Step 6: Video Tasks ──
+  // ── Step 6: Video Tasks (dynamic shots only) ──
   if (!state.steps.videoTasks) {
     log("📋 Step 6: Prepare video tasks...");
     try {
       const { SeedanceService } = await import("./lib/services/seedance-service.js");
       const seedance = new SeedanceService();
       const imagesDir = join(episodeDir, "images");
+
+      // Log shot type distribution
+      const dynamicShots = shots.filter((s) => (s.shotType ?? "dynamic") === "dynamic");
+      const staticShots = shots.filter((s) => (s.shotType ?? "dynamic") === "static");
+      const lipSyncShots = shots.filter((s) => (s.shotType ?? "dynamic") === "lipSync");
+      log(`  📊 Shot types: ${dynamicShots.length} dynamic, ${staticShots.length} static, ${lipSyncShots.length} lipSync`);
+
       const tasks = seedance.prepareVideoTasks(shots, imagesDir);
       seedance.saveTasks(tasks, join(episodeDir, "video_tasks.json"));
       state.steps.videoTasks = true;
-      log(`  ✅ ${tasks.length} video tasks saved`);
+      log(`  ✅ ${tasks.length} dynamic video tasks saved (${staticShots.length + lipSyncShots.length} shots skip Seedance)`);
     } catch (e) {
       log(`  ⚠️  Video task prep failed: ${e.message}`);
     }
@@ -411,6 +418,7 @@ async function phaseA(args) {
 
       const shotData = shots.map((s) => ({
         id: s.id,
+        shotType: s.shotType ?? "dynamic",
         imageUrl: s.imageUrl || join(imagesDir, `${s.id}_first.png`),
         lastFrameUrl: s.lastFrameUrl || join(imagesDir, `${s.id}_last.png`),
         subtitle: s.subtitle,
@@ -594,20 +602,42 @@ async function phaseC(args) {
   }
 
   const tasks = loadJson(tasksPath);
+
+  // Load script for shot type info
+  const scriptPath = join(episodeDir, "script.json");
+  const script = existsSync(scriptPath) ? loadJson(scriptPath) : null;
+  const allShots = script?.shots?.shots || script?.shots || [];
+  const shotTypeMap = new Map(allShots.map((s) => [s.id, s.shotType ?? "dynamic"]));
+
+  const dynamicShots = allShots.filter((s) => (s.shotType ?? "dynamic") === "dynamic");
+  const staticShots = allShots.filter((s) => (s.shotType ?? "dynamic") === "static");
+  const lipSyncShots = allShots.filter((s) => (s.shotType ?? "dynamic") === "lipSync");
+
   log("🎬 Phase C: Video Generation");
   log(`═══════════════════════════════════`);
-  log(`${tasks.length} video tasks to process`);
+  log(`📊 Shot types: ${dynamicShots.length} dynamic, ${staticShots.length} static, ${lipSyncShots.length} lipSync`);
+  log(`${tasks.length} dynamic video tasks to process`);
+  if (staticShots.length > 0) {
+    log(`🖼️  ${staticShots.length} static shots → skip Seedance (image + TTS + Ken Burns)`);
+    staticShots.forEach((s) => log(`   • ${s.id} [static]`));
+  }
+  if (lipSyncShots.length > 0) {
+    log(`🗣️  ${lipSyncShots.length} lipSync shots → pending Loopy integration`);
+    lipSyncShots.forEach((s) => log(`   • ${s.id} [lipSync] ⏳ 待对口型处理`));
+  }
 
   // Phase C is placeholder — actual Seedance API calls will be implemented later
   log("\n⚠️  Phase C (Seedance video generation) is not yet implemented.");
   log("This will be implemented in a future update.");
   log("\nPlanned flow:");
-  log("  1. Read video_tasks.json");
+  log("  1. Read video_tasks.json (dynamic shots only)");
   log("  2. For each task: call Seedance API with first frame + last frame + prompt");
   log("  3. Poll for completion, download videos");
-  log("  4. FFmpeg: concat videos + audio crossfade + subtitle burn + BGM overlay");
-  log("  5. Output: rough_cut.mp4 (9:16 vertical)");
-  log("  6. QC → qc_report.json");
+  log("  4. Static shots: image + TTS audio + Ken Burns effect");
+  log("  5. LipSync shots: placeholder for Loopy integration");
+  log("  6. FFmpeg: concat all clips + audio crossfade + subtitle burn + BGM overlay");
+  log("  7. Output: rough_cut.mp4 (9:16 vertical)");
+  log("  8. QC → qc_report.json");
   log("═══════════════════════════════════");
 
   state.status = "video-pending";

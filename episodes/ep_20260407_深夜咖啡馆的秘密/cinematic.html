@@ -325,7 +325,8 @@ const SHOTS = [
     speaker: "旁白",
     transition: "fade",
     emotion: "neutral",
-    kenburns: "in"
+    kenburns: "in",
+    subtitleText: "城市的深夜，总有一盏灯为你亮着。"
   },
   {
     id: "shot_2",
@@ -335,7 +336,8 @@ const SHOTS = [
     speaker: "旁白",
     transition: "fade",
     emotion: "sad",
-    kenburns: "out"
+    kenburns: "out",
+    subtitleText: "小夏已经很久没有好好坐下来了。"
   },
   {
     id: "shot_3",
@@ -345,7 +347,8 @@ const SHOTS = [
     speaker: "旁白",
     transition: "cut",
     emotion: "warm",
-    kenburns: "in"
+    kenburns: "in",
+    subtitleText: "老陈没有多问，只是默默做了一杯热可可。"
   },
   {
     id: "shot_4",
@@ -355,7 +358,8 @@ const SHOTS = [
     speaker: "旁白",
     transition: "fade",
     emotion: "warm",
-    kenburns: "out"
+    kenburns: "out",
+    subtitleText: "杯子下面压着一张纸条。"
   },
   {
     id: "shot_5",
@@ -365,7 +369,8 @@ const SHOTS = [
     speaker: "旁白",
     transition: "fade",
     emotion: "warm",
-    kenburns: "in"
+    kenburns: "in",
+    subtitleText: "姑娘，再难的路，也有人等你。"
   },
   {
     id: "shot_6",
@@ -375,7 +380,8 @@ const SHOTS = [
     speaker: "旁白",
     transition: "fade",
     emotion: "warm",
-    kenburns: "out"
+    kenburns: "out",
+    subtitleText: "雨停了，明天会更好的。"
   }
 ];
 
@@ -434,7 +440,7 @@ function showTitle() {
 
 // ========== SLIDESHOW ==========
 function startSlideshow() {
-  bgm.volume = 0.5;
+  bgm.volume = 0.2;
   const playPromise = bgm.play();
   if (playPromise) {
     playPromise.catch(e => console.warn('BGM play failed:', e));
@@ -485,6 +491,7 @@ function showSubtitle(text, speaker, shotDuration) {
   // Show after offset
   schedule(() => {
     subtitleEl.classList.add('visible');
+    speak(shot.subtitleText);
   }, SUBTITLE_OFFSET);
 
   // Fade out before end
@@ -593,15 +600,42 @@ document.addEventListener('keydown', (e) => {
 const startOverlay = document.getElementById('startOverlay');
 
 // ========== START ==========
-startOverlay.addEventListener('click', () => {
-  startOverlay.classList.add('hidden');
-  // Create audio on user gesture (required by browser autoplay policy)
-  bgm = new Audio('assets/bgm.mp3');
-  bgm.loop = true;
-  bgm.volume = 0;
-  bgm.preload = 'auto';
-  showTitle();
-});
+// BGM disabled
+bgmBars.classList.add('paused');
+// No BGM
+let bgm = null;
+
+// ========== TTS (Web Speech API) ==========
+let ttsEnabled = 'speechSynthesis' in window;
+let currentUtterance = null;
+
+function speak(text) {
+  if (!ttsEnabled) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  u.rate = 0.9;
+  u.pitch = 1.0;
+  u.volume = 1.0;
+  // Try to pick a Chinese female voice
+  const voices = speechSynthesis.getVoices();
+  const zhVoice = voices.find(v => v.lang.startsWith('zh') && v.name.includes('Female'))
+    || voices.find(v => v.lang.startsWith('zh'))
+    || voices[0];
+  if (zhVoice) u.voice = zhVoice;
+  currentUtterance = u;
+  speechSynthesis.speak(u);
+}
+
+function stopSpeak() {
+  if (ttsEnabled) speechSynthesis.cancel();
+}
+
+// Preload voices
+if (ttsEnabled) {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  speechSynthesis.getVoices();
+}
 
 init();
 </script>

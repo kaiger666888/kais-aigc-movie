@@ -3,7 +3,7 @@ export { VoiceConfigSchema, CharacterSchema, SceneSchema, StoryBibleSchema, type
 export { type VideoGenerator, type VideoOptions, } from "./services/video-generator.js";
 export { ComfyUIService, type ComfyUIOptions, } from "./services/comfyui-service.js";
 export { KlingApiService, type KlingSubmitOptions, type KlingTaskResponse, type KlingTaskResult, } from "./services/kling-api.js";
-export { GlmTtsService, VoicePresets, listVoices, type SynthesizeOptions, type SynthesizeItem, type VoicePreset, } from "./services/glm-tts.js";
+export { GlmTtsService, SystemVoices, type SystemVoiceId, listVoices, type SynthesizeOptions, type SynthesizeItem, } from "./services/glm-tts.js";
 export { concatVideos, addAudio, addSubtitle, addTransition, probeVideo, } from "./utils/ffmpeg.js";
 export { FileManager } from "./utils/file-manager.js";
 export { EpisodeStateManager } from "./utils/state-manager.js";

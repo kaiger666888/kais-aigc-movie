@@ -14,6 +14,9 @@ export const EmotionEnum = z.enum(["warm", "tense", "sad", "excited", "neutral"]
 /** Speech pace for TTS speed control */
 export const PaceEnum = z.enum(["slow", "normal", "fast"]);
 
+/** Shot type — determines video generation strategy */
+export const ShotTypeEnum = z.enum(["dynamic", "static", "lipSync"]);
+
 /** A single shot / storyboard frame */
 export const ShotSchema = z.object({
   id: z.string(),
@@ -35,6 +38,8 @@ export const ShotSchema = z.object({
   emotion: EmotionEnum.default("neutral"),
   /** Speech pace */
   pace: PaceEnum.default("normal"),
+  /** Shot type: dynamic=video, static=image+audio, lipSync=reserved for Loopy */
+  shotType: ShotTypeEnum.default("dynamic"),
   /** Scene group ID — shots in the same group share TTS context */
   sceneGroupId: z.string().optional(),
   /** BGM style description */
@@ -112,6 +117,7 @@ export const TemplateSchema = z.object({
 export type ShotStatus = z.infer<typeof ShotStatusEnum>;
 export type Emotion = z.infer<typeof EmotionEnum>;
 export type Pace = z.infer<typeof PaceEnum>;
+export type ShotType = z.infer<typeof ShotTypeEnum>;
 export type Shot = z.infer<typeof ShotSchema>;
 export type ShotsConfig = z.infer<typeof ShotsConfigSchema>;
 export type EpisodeConfig = z.infer<typeof EpisodeConfigSchema>;

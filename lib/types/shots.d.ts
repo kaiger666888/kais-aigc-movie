@@ -5,6 +5,8 @@ export declare const ShotStatusEnum: z.ZodEnum<["pending", "generating", "done",
 export declare const EmotionEnum: z.ZodEnum<["warm", "tense", "sad", "excited", "neutral"]>;
 /** Speech pace for TTS speed control */
 export declare const PaceEnum: z.ZodEnum<["slow", "normal", "fast"]>;
+/** Shot type — determines video generation strategy */
+export declare const ShotTypeEnum: z.ZodEnum<["dynamic", "static", "lipSync"]>;
 /** A single shot / storyboard frame */
 export declare const ShotSchema: z.ZodObject<{
     id: z.ZodString;
@@ -26,6 +28,8 @@ export declare const ShotSchema: z.ZodObject<{
     emotion: z.ZodDefault<z.ZodEnum<["warm", "tense", "sad", "excited", "neutral"]>>;
     /** Speech pace */
     pace: z.ZodDefault<z.ZodEnum<["slow", "normal", "fast"]>>;
+    /** Shot type: dynamic=video, static=image+audio, lipSync=reserved for Loopy */
+    shotType: z.ZodDefault<z.ZodEnum<["dynamic", "static", "lipSync"]>>;
     /** Scene group ID — shots in the same group share TTS context */
     sceneGroupId: z.ZodOptional<z.ZodString>;
     /** BGM style description */
@@ -68,6 +72,7 @@ export declare const ShotSchema: z.ZodObject<{
     visualPrompt: string;
     emotion: "warm" | "tense" | "sad" | "excited" | "neutral";
     pace: "normal" | "slow" | "fast";
+    shotType: "dynamic" | "static" | "lipSync";
     subtitle: string;
     speaker: string;
     cameraAngle: string;
@@ -101,6 +106,7 @@ export declare const ShotSchema: z.ZodObject<{
     characterProfile?: string | undefined;
     emotion?: "warm" | "tense" | "sad" | "excited" | "neutral" | undefined;
     pace?: "normal" | "slow" | "fast" | undefined;
+    shotType?: "dynamic" | "static" | "lipSync" | undefined;
     sceneGroupId?: string | undefined;
     musicStyle?: string | undefined;
     speaker?: string | undefined;
@@ -139,6 +145,8 @@ export declare const ShotsConfigSchema: z.ZodObject<{
         emotion: z.ZodDefault<z.ZodEnum<["warm", "tense", "sad", "excited", "neutral"]>>;
         /** Speech pace */
         pace: z.ZodDefault<z.ZodEnum<["slow", "normal", "fast"]>>;
+        /** Shot type: dynamic=video, static=image+audio, lipSync=reserved for Loopy */
+        shotType: z.ZodDefault<z.ZodEnum<["dynamic", "static", "lipSync"]>>;
         /** Scene group ID — shots in the same group share TTS context */
         sceneGroupId: z.ZodOptional<z.ZodString>;
         /** BGM style description */
@@ -181,6 +189,7 @@ export declare const ShotsConfigSchema: z.ZodObject<{
         visualPrompt: string;
         emotion: "warm" | "tense" | "sad" | "excited" | "neutral";
         pace: "normal" | "slow" | "fast";
+        shotType: "dynamic" | "static" | "lipSync";
         subtitle: string;
         speaker: string;
         cameraAngle: string;
@@ -214,6 +223,7 @@ export declare const ShotsConfigSchema: z.ZodObject<{
         characterProfile?: string | undefined;
         emotion?: "warm" | "tense" | "sad" | "excited" | "neutral" | undefined;
         pace?: "normal" | "slow" | "fast" | undefined;
+        shotType?: "dynamic" | "static" | "lipSync" | undefined;
         sceneGroupId?: string | undefined;
         musicStyle?: string | undefined;
         speaker?: string | undefined;
@@ -239,6 +249,7 @@ export declare const ShotsConfigSchema: z.ZodObject<{
         visualPrompt: string;
         emotion: "warm" | "tense" | "sad" | "excited" | "neutral";
         pace: "normal" | "slow" | "fast";
+        shotType: "dynamic" | "static" | "lipSync";
         subtitle: string;
         speaker: string;
         cameraAngle: string;
@@ -274,6 +285,7 @@ export declare const ShotsConfigSchema: z.ZodObject<{
         characterProfile?: string | undefined;
         emotion?: "warm" | "tense" | "sad" | "excited" | "neutral" | undefined;
         pace?: "normal" | "slow" | "fast" | undefined;
+        shotType?: "dynamic" | "static" | "lipSync" | undefined;
         sceneGroupId?: string | undefined;
         musicStyle?: string | undefined;
         speaker?: string | undefined;
@@ -357,6 +369,7 @@ export declare const TemplateSchema: z.ZodObject<{
 export type ShotStatus = z.infer<typeof ShotStatusEnum>;
 export type Emotion = z.infer<typeof EmotionEnum>;
 export type Pace = z.infer<typeof PaceEnum>;
+export type ShotType = z.infer<typeof ShotTypeEnum>;
 export type Shot = z.infer<typeof ShotSchema>;
 export type ShotsConfig = z.infer<typeof ShotsConfigSchema>;
 export type EpisodeConfig = z.infer<typeof EpisodeConfigSchema>;

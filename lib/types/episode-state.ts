@@ -44,6 +44,8 @@ export const EpisodeStateSchema = z.object({
       characterCount: z.number().optional(),
     })
     .optional(),
+  /** Per-shot audio paths (for static/lipSync shots using TTS + Ken Burns) */
+  audioPaths: z.record(z.string(), z.string()).default({}),
 });
 
 export type EpisodeStatus = z.infer<typeof EpisodeStatusEnum>;
