@@ -11,8 +11,9 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { GitStageManager, runGitStageCli } from "./lib/git-stage-manager.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -39,6 +40,12 @@ function parseArgs() {
     if (key === "--skip-voice") args.skipVoice = true;
     if (key === "--skip-music") args.skipMusic = true;
     if (key === "--dry-run") args.dryRun = true;
+    if (key === "--writer-mode" && next) args.writerMode = next;
+    if (key === "--genre" && next) args.genre = next;
+    if (key === "--skip-git") args.skipGit = true;
+    if (key === "--target-stage" && next) args.targetStage = next;
+    if (key === "--stage-a" && next) args.stageA = next;
+    if (key === "--stage-b" && next) args.stageB = next;
   }
   return args;
 }
@@ -66,6 +73,27 @@ function saveJson(path, data) {
 
 function ensureDir(dir) {
   mkdirSync(dir, { recursive: true });
+}
+
+// ─── Git Stage Manager ─────────────────────────────────────
+
+const stageManager = new GitStageManager();
+
+async function checkpoint(episodeDir, stageName, metadata) {
+  try {
+    const result = await stageManager.checkpoint(episodeDir, stageName, metadata);
+    if (result.skipped) {
+      log(`  [git] Skipped checkpoint "${stageName}": ${result.reason}`);
+    } else if (result.success) {
+      log(`  [git] Checkpoint "${stageName}": ${result.commitHash} (${result.filesCount} files)`);
+    } else {
+      log(`  [git] Checkpoint "${stageName}" failed: ${result.error}`);
+    }
+    return result;
+  } catch (e) {
+    log(`  [git] Checkpoint error: ${e.message}`);
+    return { success: false, error: e.message };
+  }
 }
 
 // ─── Phase A: Material Generation ──────────────────────────
@@ -122,6 +150,11 @@ async function phaseA(args) {
     log(`New episode: ${episodeId} — "${args.topic}"`);
   }
 
+  // Initialize git stage manager (unless --skip-git)
+  if (!args.skipGit) {
+    stageManager.init(episodeDir);
+  }
+
   // ── Step 0: Quota Check ──
   if (!state.steps.writer) {
     log("💰 Step 0: Quota check...");
@@ -141,25 +174,68 @@ async function phaseA(args) {
 
   // ── Step 1: Writer ──
   if (!state.steps.writer && !args.skipWriter) {
-    log("📝 Step 1: Writer — Generating script...");
-    const prompt = readFileSync(join(__dirname, "prompts", "writer-prompt.md"), "utf-8")
-      .replace("{TOPIC}", state.topic)
-      .replace("{DURATION}", state.config.duration)
-      .replace("{SHOT_COUNT}", state.config.shotCount)
-      .replace("{STYLE}", state.config.style)
-      .replace("{RATIO}", state.config.ratio);
+    const writerMode = args.writerMode || "quick";
+    log(`📝 Step 1: Writer — Generating script... (mode: ${writerMode})`);
 
-    const writerPrompt = `${prompt}\n\n请严格按照上述 JSON 格式输出，不要添加任何其他文字。将完整的 JSON 写入文件: ${join(episodeDir, "script.json")}`;
-    writeFileSync(join(episodeDir, "writer-prompt.txt"), writerPrompt);
+    if (writerMode === "standard" || writerMode === "premium") {
+      // Premium/Standard writer pipeline: Oracle → Genre → Technique → Assemble → Evaluate
+      log(`  🚀 Using ${writerMode} writer pipeline...`);
+      try {
+        const { generateScript } = await import("./lib/writer-pipeline.js");
+        const result = await generateScript(state.topic, {
+          mode: writerMode,
+          genre: args.genre,
+          shotCount: state.config.shotCount,
+          duration: state.config.duration,
+          style: state.config.style,
+          ratio: state.config.ratio,
+        });
 
-    state.status = "writing";
-    saveJson(join(episodeDir, "state.json"), state);
-    log(`Writer prompt saved. WRITER_PENDING: 请使用 GLM 读取并生成 script.json`);
-    log(`预期输出: ${join(episodeDir, "script.json")}`);
+        saveJson(join(episodeDir, "script.json"), result.script);
+        if (result.evaluation) {
+          saveJson(join(episodeDir, "writer-evaluation.json"), {
+            ...result.evaluation,
+            iterations: result.iterations,
+            oracle: result.oracleOutput,
+          });
+        }
+        log(`  ✅ Script generated via ${writerMode} pipeline (${result.iterations} iteration(s), score: ${result.evaluation?.total?.toFixed(1) ?? "N/A"})`);
+      } catch (e) {
+        log(`  ❌ ${writerMode} writer pipeline failed: ${e.message}`);
+        log(`  ⚠️  Falling back to quick mode...`);
+        // Fall through to quick mode below
+        state.steps.writer = false; // ensure quick mode runs
+      }
 
-    if (!args.dryRun && !existsSync(join(episodeDir, "script.json"))) {
-      log("❌ script.json 不存在，无法继续。请先完成 Writer 步骤。");
-      process.exit(0);
+      // If premium failed and script exists, continue; otherwise fall through to quick
+      if (existsSync(join(episodeDir, "script.json"))) {
+        state.steps.writer = true;
+        saveJson(join(episodeDir, "state.json"), state);
+      }
+    }
+
+    // Quick mode (default) — original logic
+    if (!state.steps.writer) {
+      log("📝 Step 1: Writer (quick) — Generating script...");
+      const prompt = readFileSync(join(__dirname, "prompts", "writer-prompt.md"), "utf-8")
+        .replace("{TOPIC}", state.topic)
+        .replace("{DURATION}", state.config.duration)
+        .replace("{SHOT_COUNT}", state.config.shotCount)
+        .replace("{STYLE}", state.config.style)
+        .replace("{RATIO}", state.config.ratio);
+
+      const writerPrompt = `${prompt}\n\n请严格按照上述 JSON 格式输出，不要添加任何其他文字。将完整的 JSON 写入文件: ${join(episodeDir, "script.json")}`;
+      writeFileSync(join(episodeDir, "writer-prompt.txt"), writerPrompt);
+
+      state.status = "writing";
+      saveJson(join(episodeDir, "state.json"), state);
+      log(`Writer prompt saved. WRITER_PENDING: 请使用 GLM 读取并生成 script.json`);
+      log(`预期输出: ${join(episodeDir, "script.json")}`);
+
+      if (!args.dryRun && !existsSync(join(episodeDir, "script.json"))) {
+        log("❌ script.json 不存在，无法继续。请先完成 Writer 步骤。");
+        process.exit(0);
+      }
     }
   }
 
@@ -190,6 +266,12 @@ async function phaseA(args) {
     saveJson(join(episodeDir, "shots.json"), { shots });
   }
   state.steps.writer = true;
+  saveJson(join(episodeDir, "state.json"), state);
+  if (!args.skipGit) {
+    await checkpoint(episodeDir, "script", {
+      metrics: { shotCount: shots.length, mode: args.writerMode || "quick" },
+    });
+  }
 
   // ── Step 2: Image Generation (Jimeng) ──
   if (!state.steps.images && !args.skipImages) {
@@ -290,6 +372,12 @@ async function phaseA(args) {
 
       state.steps.images = true;
       log("✅ Image generation complete");
+      saveJson(join(episodeDir, "state.json"), state);
+      if (!args.skipGit) {
+        await checkpoint(episodeDir, "images", {
+          metrics: { imageCount: shots.length * 2 },
+        });
+      }
     } catch (e) {
       log(`❌ Image generation failed: ${e.message}`);
     }
@@ -344,6 +432,10 @@ async function phaseA(args) {
 
       state.steps.voice = true;
       log("✅ Voice synthesis complete");
+      saveJson(join(episodeDir, "state.json"), state);
+      if (!args.skipGit) {
+        await checkpoint(episodeDir, "voice");
+      }
     } catch (e) {
       log(`❌ Voice synthesis failed: ${e.message}`);
     }
@@ -364,6 +456,10 @@ async function phaseA(args) {
       if (existsSync(join(episodeDir, "assets", "bgm.mp3"))) {
         state.steps.music = true;
         log("  ✅ BGM already exists");
+        saveJson(join(episodeDir, "state.json"), state);
+        if (!args.skipGit) {
+          await checkpoint(episodeDir, "music");
+        }
       }
     } catch (e) {
       log(`  ⚠️  Music search skipped: ${e.message}`);

@@ -1,0 +1,25 @@
+{
+  "id": "ep_20260408_深夜咖啡馆的秘密",
+  "topic": "深夜咖啡馆的秘密",
+  "phase": "material",
+  "status": "material-done",
+  "createdAt": "2026-04-08T08:42:13.924Z",
+  "steps": {
+    "writer": true,
+    "images": true,
+    "voice": true,
+    "music": false,
+    "subtitles": true,
+    "videoTasks": true,
+    "storyHtml": true,
+    "evaluation": true
+  },
+  "config": {
+    "shotCount": 8,
+    "duration": 50,
+    "voice": "male-narrator",
+    "style": "comic",
+    "ratio": "9:16"
+  },
+  "updatedAt": "2026-04-08T09:31:55.463Z"
+}

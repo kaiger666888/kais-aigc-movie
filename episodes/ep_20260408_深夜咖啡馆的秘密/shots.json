@@ -1,0 +1,80 @@
+{
+  "shots": [
+    {
+      "id": "shot_1",
+      "sceneId": "s1",
+      "duration": 5,
+      "shotType": "static",
+      "imagePrompt": "深夜街道，一家亮着暖黄灯光的咖啡馆，窗外有落叶，街景空旷，漫画风格",
+      "subtitle": "城市睡了，但总有一盏灯为你亮着。",
+      "speaker": "旁白",
+      "cameraAngle": "wide",
+      "transition": "fade",
+      "emotion": "calm"
+    },
+    {
+      "id": "shot_2",
+      "sceneId": "s1",
+      "duration": 4,
+      "shotType": "dynamic",
+      "imagePrompt": "小夏推开咖啡馆的门，肩膀下垂神情疲惫，背着沉重的电脑包，漫画风格",
+      "lastFramePrompt": "小夏走到吧台前，把电脑包放在桌上，漫画风格",
+      "videoPrompt": "小夏推门进入带进冷风，走到吧台前卸下电脑包",
+      "subtitle": "",
+      "speaker": "",
+      "cameraAngle": "medium",
+      "transition": "cut",
+      "emotion": "tired"
+    },
+    {
+      "id": "shot_3",
+      "sceneId": "s1",
+      "duration": 4,
+      "shotType": "lipSync",
+      "imagePrompt": "老陈面部特写，眼角有皱纹，眼神温和慈祥，穿着旧围裙，漫画风格",
+      "subtitle": "还是老样子？热可可，多加棉花糖。",
+      "speaker": "c2",
+      "cameraAngle": "close-up",
+      "transition": "cut",
+      "emotion": "warm"
+    },
+    {
+      "id": "shot_4",
+      "sceneId": "s1",
+      "duration": 5,
+      "shotType": "dynamic",
+      "imagePrompt": "咖啡机蒸汽喷出，老陈的手正在搅拌热可可，白色棉花糖堆在杯顶，漫画风格",
+      "lastFramePrompt": "一杯完美的热可可放在吧台上，棉花糖微微融化，漫画风格",
+      "videoPrompt": "老陈制作热可可，咖啡机蒸汽喷出，棉花糖慢慢融化",
+      "subtitle": "",
+      "speaker": "",
+      "cameraAngle": "close-up",
+      "transition": "fade",
+      "emotion": "warm"
+    },
+    {
+      "id": "shot_5",
+      "sceneId": "s1",
+      "duration": 5,
+      "shotType": "static",
+      "imagePrompt": "小夏双手捧着热可可，眼眶微红，棉花糖冒着热气，暖光映在脸上，漫画风格",
+      "subtitle": "小夏看着杯中的棉花糖，嘴角微微上扬。",
+      "speaker": "旁白",
+      "cameraAngle": "medium",
+      "transition": "fade",
+      "emotion": "warm"
+    },
+    {
+      "id": "shot_6",
+      "sceneId": "s1",
+      "duration": 5,
+      "shotType": "static",
+      "imagePrompt": "窗外雨停了，街道上积水倒映着路灯，咖啡馆灯光温暖，远景，漫画风格",
+      "subtitle": "雨停了。明天，也是新的一天。",
+      "speaker": "旁白",
+      "cameraAngle": "wide",
+      "transition": "fade",
+      "emotion": "hopeful"
+    }
+  ]
+}

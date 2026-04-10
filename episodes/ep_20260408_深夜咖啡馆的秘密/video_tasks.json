@@ -1,0 +1,22 @@
+[
+  {
+    "shotId": "shot_2",
+    "prompt": "小夏推门进入带进冷风，走到吧台前卸下电脑包",
+    "firstFramePath": "episodes/ep_20260408_深夜咖啡馆的秘密/images/shot_2_first.png",
+    "lastFramePath": "episodes/ep_20260408_深夜咖啡馆的秘密/images/shot_2_last.png",
+    "ambienceSegmentPath": "episodes/ep_20260408_深夜咖啡馆的秘密/images/ambience_default_shot_2.wav",
+    "ratio": "4:3",
+    "duration": 4,
+    "status": "pending"
+  },
+  {
+    "shotId": "shot_4",
+    "prompt": "老陈制作热可可，咖啡机蒸汽喷出，棉花糖慢慢融化",
+    "firstFramePath": "episodes/ep_20260408_深夜咖啡馆的秘密/images/shot_4_first.png",
+    "lastFramePath": "episodes/ep_20260408_深夜咖啡馆的秘密/images/shot_4_last.png",
+    "ambienceSegmentPath": "episodes/ep_20260408_深夜咖啡馆的秘密/images/ambience_default_shot_4.wav",
+    "ratio": "4:3",
+    "duration": 5,
+    "status": "pending"
+  }
+]

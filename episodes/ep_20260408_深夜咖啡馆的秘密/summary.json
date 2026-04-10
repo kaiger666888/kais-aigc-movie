@@ -1,0 +1,19 @@
+{
+  "episodeDir": "./episodes/ep_20260408_深夜咖啡馆的秘密",
+  "episodeId": "ep_20260408_深夜咖啡馆的秘密",
+  "phase": "material",
+  "status": "material-done",
+  "storyHtml": "episodes/ep_20260408_深夜咖啡馆的秘密/story.html",
+  "videoTasks": "episodes/ep_20260408_深夜咖啡馆的秘密/video_tasks.json",
+  "evaluation": "episodes/ep_20260408_深夜咖啡馆的秘密/evaluation.json",
+  "steps": {
+    "writer": true,
+    "images": true,
+    "voice": true,
+    "music": false,
+    "subtitles": true,
+    "videoTasks": true,
+    "storyHtml": true,
+    "evaluation": true
+  }
+}

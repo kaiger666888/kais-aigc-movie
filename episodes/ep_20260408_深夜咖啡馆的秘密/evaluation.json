@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-04-08T08:47:46.094Z",
+  "imageCount": 0,
+  "totalShots": 6,
+  "audioCount": 0,
+  "hasSubtitles": true,
+  "hasVideoTasks": true,
+  "hasStoryHtml": true,
+  "hasBgm": false,
+  "score": {
+    "completeness": 5,
+    "quality": "pending"
+  }
+}
